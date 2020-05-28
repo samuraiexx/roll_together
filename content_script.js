@@ -4,7 +4,7 @@
 
     const crunchyPartyExtension = chrome
       .runtime
-      .connect('npadafhdpkboekbeaghejnjceedcjkkm', {name: 'crunchyParty'});
+      .connect('ihablaljfnaebapdcgnomolaijpmhkff', {name: 'crunchyParty'});
 
     async function getState(stateName) {
       const func = VILOS_PLAYERJS[stateName].bind(VILOS_PLAYERJS);

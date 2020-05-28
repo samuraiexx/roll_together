@@ -29,5 +29,6 @@
       "128": "images/get_started128.png"
     }
   },
-  "manifest_version": 2
+  "manifest_version": 2,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArcGab+PzppC/+XejE0z7kusfAXlu5DA5nUgFsfMAhOaSdtuBHClmRt6Sxg4IBSADQ3IFX7CnrlS/wWEf2XheU+Ou1Uj7hKpEnI3ThCX6qJyz2GD200ywQmNVS++TOqoQV03nbfSUsHVLJm+HqYxZBlVVlmWk6mgjIwxjOI87DmUIx+VOjv+rtBYaaUg+38Ri/ROYiAFaewUfIQVFZuRuYHc5klg788rUmX4E2pl2e+UPFlzdfYatGBoVV2lQhP4g0NtfwvbOE6sOW3VDCAwrNyqz/3LDldIwyZHtYUOesvI/g0CrFi0faO0kkMJsTjGMyPLRwfnNau/TkKqLfCswxQIDAQAB"
 }
