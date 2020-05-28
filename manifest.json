@@ -4,10 +4,15 @@
   "description": "It's an extension that lets you and a friend syncronize your anime so you can watch together =]",
   "background": {
     "scripts": [
+      "socket.io.js",
       "background.js"
     ],
     "persistent": false
   },
+  "externally_connectable": {
+    "matches": ["*://www.crunchyroll.com/*"]
+  },
+  "content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
   "permissions": ["activeTab", "declarativeContent", "storage"],
   "page_action": {
     "default_popup": "popup.html",

@@ -1,56 +1,42 @@
-const actionButton = document.getElementById('crunchyParty');
+const actionButton = document.getElementById('crunchy-party');
+const background = chrome.extension.getBackgroundPage();
+const roomIdContainer = document.getElementById('room-id-container');
 
-const code = `
-console.log(window);
-console.log(VILOS_PLAYERJS);
-async function getStates() {
-  const [paused, duration, currentTime] = await Promise.all([
-    getState("getPaused"),
-    getState("getDuration"),
-    getState("getCurrentTime"),
-  ]);
+function getParameterByName(url, name) {
+  const queryString = /\?[^#]+(?=#|$)|$/.exec(url)[0];
+  const regex = new RegExp("(?:[?&]|^)" + name + "=([^&#]*)");
+  const results = regex.exec(queryString);
 
-  return { paused, duration, currentTime };
+  console.log({url, queryString, name, results});
+  if(!results || results.length < 2) {
+    return null;
+  }
+
+  return decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
-async function onTogglePlay() {
-  console.log("Toggle Play", await getStates());
+function update() {
+  const roomId = background.roomId;
+  if(roomId) {
+    roomIdContainer.innerHTML = roomId;
+    navigator.clipboard.writeText(roomId);
+  }
 }
+update();
 
-async function onReady() {
-  console.log("Ready", await getStates());
-}
-
-async function onEnded() {
-  console.log("Ended", await getStates());
-}
-
-async function onTimeUpdate() {
-  console.log("Time Update");
-}
-
-async function onProgress() {
-  console.log("Progress", await getStates());
-}
-
-VILOS_PLAYERJS.on("play", onTogglePlay);
-VILOS_PLAYERJS.on("pause", onTogglePlay);
-VILOS_PLAYERJS.on("ready", onReady);
-VILOS_PLAYERJS.on("ended", onEnded);
-VILOS_PLAYERJS.on("timeupdate", onTimeUpdate);
-VILOS_PLAYERJS.on("progress", onProgress);
-VILOS_PLAYERJS.on("setCurrentTime", onProgress);
-`;
 
 actionButton.onclick = function () {
-  var script = document.createElement("script");
-  script.textContent = code;
-  (document.head).appendChild(script);
-  /*
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.executeScript(
-        tabs[0].id,
-        { code: code });
-    });
-    */
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    tab = tabs[0];
+
+    chrome.tabs.executeScript(
+      tab.id,
+      { file: 'content_script.js' },
+      () => {
+        const roomId = getParameterByName(tab.url, 'crunchyPartyRoom');
+        background.connectWebsocket(roomId, update);
+      }
+    );
+
+  });
 };
