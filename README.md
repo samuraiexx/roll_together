@@ -1,1 +1,1 @@
-# crunchyroll_party
+# crunchy_party

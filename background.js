@@ -22,7 +22,7 @@ chrome.runtime.onConnectExternal.addListener(port => {
 
 function connectWebsocket(urlRoomId, updatePopup) {
   const query = urlRoomId ? `room=${urlRoomId}` : '';
-  const socket = io('https://crunchyroll-party.herokuapp.com', { query });
+  const socket = io('https://crunchy-party.herokuapp.com', { query });
 
   socket.on('room', receivedRoomId => {
     window.roomId = receivedRoomId;
