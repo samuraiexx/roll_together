@@ -1,6 +1,7 @@
 'use strict';
 window.roomId = null;
 let webPageConnection = null;
+let socket = null;
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
@@ -17,12 +18,13 @@ chrome.runtime.onConnectExternal.addListener(port => {
   console.log("Connected to extension messaging system", port);
   console.assert(port.name == "crunchyParty");
   webPageConnection = port;
-  window.webPageConnection = port;
+
+  trySetupWebpageConnection();
 });
 
 function connectWebsocket(urlRoomId, updatePopup) {
   const query = urlRoomId ? `room=${urlRoomId}` : '';
-  const socket = io('https://crunchy-party.herokuapp.com', { query });
+  socket = io('https://crunchy-party.herokuapp.com', { query });
 
   socket.on('room', receivedRoomId => {
     window.roomId = receivedRoomId;
@@ -39,6 +41,14 @@ function connectWebsocket(urlRoomId, updatePopup) {
     console.log('Received Pause Message from ', id);
     webPageConnection.postMessage({ crunchyPartyActionReceived: "pause" });
   });
+
+  trySetupWebpageConnection();
+}
+
+function trySetupWebpageConnection() {
+  if (!webPageConnection || !socket) {
+    return;
+  }
 
   webPageConnection.onMessage.addListener(
     function (request) {
