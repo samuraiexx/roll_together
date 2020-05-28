@@ -19,7 +19,11 @@ function update() {
   const roomId = background.roomId;
   if(roomId) {
     roomIdContainer.innerHTML = roomId;
-    navigator.clipboard.writeText(roomId);
+    try {
+      navigator.clipboard.writeText(roomId);
+    } catch (ex) {
+      // Do nothing, it just wont copy the text
+    }
   }
 }
 update();
