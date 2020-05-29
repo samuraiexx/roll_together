@@ -1,8 +1,12 @@
 'use strict';
 
 window.roomId = null;
+window.updatePopup = null;
+
 let webPageConnection = null;
 let socket = null;
+
+log("Initialized");
 
 function executeScript(tabId, obj) {
   return new Promise(
@@ -24,43 +28,39 @@ chrome.runtime.onInstalled.addListener(function () {
 chrome.runtime.onConnectExternal.addListener(port => {
   webPageConnection = port;
 
-  trySetupWebpageConnection();
+  webPageConnection.onMessage.addListener(
+    function ({ currentProgress, initialMessage }) {
+      if(!initialMessage) return;
+      log('Initial message received from webpage', {currentProgress});
+      connectWebsocket(currentProgress);
+    }
+  );
 });
 
-function connectWebsocket(urlRoomId, updatePopup) {
-  const query = urlRoomId ? `room=${urlRoomId}` : '';
-  socket = io('https://crunchy-party.herokuapp.com', { query });
+function connectWebsocket(videoProgress) {
+  const { roomId, updatePopup } = window;
+  let query = `videoProgress=${Math.round(videoProgress)}` + (roomId ? `&room=${roomId}` : '');
 
-  socket.on('room', receivedRoomId => {
-    window.roomId = receivedRoomId;
-    log({ receivedRoomId, updatePopup });
+  socket = io('https://crunchy-party.herokuapp.com/', { query });
+
+  socket.on('join', (roomId, roomState, roomProgress) => {
+    window.roomId = roomId;
+    log('Sucessfully joined a room', { roomId, roomState, roomProgress });
     updatePopup && updatePopup();
+
+    webPageConnection.postMessage({ roomState, roomProgress });
   });
 
-  socket.on(Actions.PLAY, (id) => {
-    log('Received Play Message from ', id);
-    webPageConnection.postMessage({ remoteAction: Actions.PLAY });
+  socket.on('update', (id, roomState, roomProgress) => {
+    log('Received update Message from ', id, { roomState, roomProgress });
+    webPageConnection.postMessage({ roomState, roomProgress });
   });
-
-  socket.on(Actions.PAUSE, (id) => {
-    log('Received Pause Message from ', id);
-    webPageConnection.postMessage({ remoteAction: Actions.PAUSE });
-  });
-
-  trySetupWebpageConnection();
-}
-
-function trySetupWebpageConnection() {
-  if (!webPageConnection || !socket) {
-    return;
-  }
 
   webPageConnection.onMessage.addListener(
-    function (request) {
-      const action = request.localAction;
-      log('Received webpage request', action);
+    function ({ state, currentProgress }) {
+      log('Received webpage update', { state, currentProgress });
 
-      socket.emit(action);
+      socket.emit('update', state, currentProgress);
     }
   );
 }

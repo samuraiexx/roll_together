@@ -1,6 +1,7 @@
 if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
   crunchyPartyScript = () => {
     const ignoreNext = {};
+    let lastFrameProgress = null;
 
     const crunchyPartyExtension = chrome
       .runtime
@@ -12,13 +13,19 @@ if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
     }
 
     async function getStates() {
-      const [paused, duration, currentTime] = await Promise.all([
+      const [paused, currentProgress] = await Promise.all([
         getState("getPaused"),
-        getState("getDuration"),
         getState("getCurrentTime"),
+        // getState("getDuration"),
       ]);
 
-      return { paused, duration, currentTime };
+      lastFrameProgress = lastFrameProgress || currentProgress;
+
+      const timeJump = Math.abs(currentProgress - lastFrameProgress) > LIMIT_DELTA_TIME;
+      const state = paused ? States.PAUSED : States.PLAYING;
+
+      lastFrameProgress = currentProgress;
+      return { state, currentProgress, timeJump };
     }
 
     const handleLocalAction = action => async () => {
@@ -27,42 +34,63 @@ if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
         return;
       }
 
-      log(action, await getStates());
+      const { state, currentProgress, timeJump } = await getStates();
+
+      log('Local Action', action, {state, currentProgress});
       switch (action) {
         case Actions.PLAY:
         case Actions.PAUSE:
-          crunchyPartyExtension.postMessage({ localAction: action });
+          crunchyPartyExtension.postMessage({ state, currentProgress });
+          break;
+        case Actions.TIMEUPDATE:
+           timeJump && crunchyPartyExtension.postMessage({ state, currentProgress });
           break;
       }
     }
 
-    const handleRemoteAction = action => {
-      console.log({action});
+    const sendInitialMessage = async () => {
+      const { state, currentProgress } = await getStates();
+      crunchyPartyExtension.postMessage({ state, currentProgress, initialMessage: true });
+    }
+
+    const triggerAction = (action, progress) => {
       ignoreNext[action] = true;
 
       switch (action) {
         case Actions.PAUSE:
           VILOS_PLAYERJS.pause();
+          VILOS_PLAYERJS.setCurrentTime(progress);
           break;
         case Actions.PLAY:
           VILOS_PLAYERJS.play();
+          break;
+        case Actions.TIMEUPDATE:
+          VILOS_PLAYERJS.setCurrentTime(progress);
           break;
         default:
           ignoreNext[action] = false;
       }
     }
 
+    const handleRemoteUpdate = async ({roomState, roomProgress}) => {
+      log('Handling Remote Update', {roomState, roomProgress});
+      const { state, currentProgress } = await getStates();
+      if(state !== roomState) {
+        if(roomState === States.PAUSED) triggerAction(Actions.PAUSE, roomProgress);
+        if(roomState === States.PLAYING) triggerAction(Actions.PLAY, roomProgress);
+      }
+
+      if(Math.abs(roomProgress - currentProgress) > LIMIT_DELTA_TIME) {
+        triggerAction(Actions.TIMEUPDATE, roomProgress);
+      } 
+    }
+
     Object.values(Actions).forEach(
       action => VILOS_PLAYERJS.on(action, handleLocalAction(action))
     );
 
-    crunchyPartyExtension.onMessage.addListener(
-      function (request) {
-        const action = request.remoteAction;
-        log(`Received ${action} from server`);
-        handleRemoteAction(action);
-      }
-    );
+    crunchyPartyExtension.onMessage.addListener(handleRemoteUpdate);
+    sendInitialMessage();
   };
 
   var commonScript = document.createElement("script");

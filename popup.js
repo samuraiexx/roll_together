@@ -24,15 +24,20 @@ function update() {
   const roomId = background.roomId;
   if(roomId) {
     roomIdContainer.innerHTML = roomId;
-    navigator.clipboard.writeText(roomId).catch(error => {}); //Do nothing on Error
+    const clipBoard = navigator.clipboard;
+    clipBoard && clipBoard.writeText(roomId).catch(error => {}); //Do nothing on Error
   }
 }
+background.window.updatePopup = update;
 update();
 
 
 actionButton.onclick = async function () {
   chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
     tab = tabs[0];
+
+    const roomId = getParameterByName(tab.url, 'crunchyPartyRoom');
+    background.window.roomId = roomId;
 
     const commonCodeResponse = await fetch('common.js');
     const commonCode = await commonCodeResponse.text();
@@ -42,8 +47,5 @@ actionButton.onclick = async function () {
       { code: `commonCode = \`${commonCode}\`;` }
     );
     await executeScript(tab.id, { file: 'content_script.js' });
-
-    const roomId = getParameterByName(tab.url, 'crunchyPartyRoom');
-    background.connectWebsocket(roomId, update);
   });
 };
