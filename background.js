@@ -1,7 +1,14 @@
 'use strict';
+
 window.roomId = null;
 let webPageConnection = null;
 let socket = null;
+
+function executeScript(tabId, obj) {
+  return new Promise(
+    callback => chrome.tabs.executeScript(tabId, obj, callback)
+  );
+}
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
@@ -15,8 +22,6 @@ chrome.runtime.onInstalled.addListener(function () {
 });
 
 chrome.runtime.onConnectExternal.addListener(port => {
-  console.log("Connected to extension messaging system", port);
-  console.assert(port.name == "crunchyParty");
   webPageConnection = port;
 
   trySetupWebpageConnection();
@@ -28,18 +33,18 @@ function connectWebsocket(urlRoomId, updatePopup) {
 
   socket.on('room', receivedRoomId => {
     window.roomId = receivedRoomId;
-    console.log({ receivedRoomId, updatePopup });
+    log({ receivedRoomId, updatePopup });
     updatePopup && updatePopup();
   });
 
-  socket.on('play', (id) => {
-    console.log('Received Play Message from ', id);
-    webPageConnection.postMessage({ crunchyPartyActionReceived: "play" });
+  socket.on(Actions.PLAY, (id) => {
+    log('Received Play Message from ', id);
+    webPageConnection.postMessage({ remoteAction: Actions.PLAY });
   });
 
-  socket.on('pause', (id) => {
-    console.log('Received Pause Message from ', id);
-    webPageConnection.postMessage({ crunchyPartyActionReceived: "pause" });
+  socket.on(Actions.PAUSE, (id) => {
+    log('Received Pause Message from ', id);
+    webPageConnection.postMessage({ remoteAction: Actions.PAUSE });
   });
 
   trySetupWebpageConnection();
@@ -52,18 +57,10 @@ function trySetupWebpageConnection() {
 
   webPageConnection.onMessage.addListener(
     function (request) {
-      const action = request.crunchyPartyAction;
-      console.log('Received webpage request', action);
+      const action = request.localAction;
+      log('Received webpage request', action);
 
-      switch (action) {
-        case "play":
-          socket.emit('play');
-          break;
-        case "pause":
-          socket.emit('pause');
-          break;
-        default:
-          break;
-      }
-    });
+      socket.emit(action);
+    }
+  );
 }

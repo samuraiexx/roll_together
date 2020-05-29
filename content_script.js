@@ -1,10 +1,10 @@
-{
-  const crunchyPartyScript = () => {
-    let ignoreNext = {play: false, pause: false};
+if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
+  crunchyPartyScript = () => {
+    const ignoreNext = {};
 
     const crunchyPartyExtension = chrome
       .runtime
-      .connect('ihablaljfnaebapdcgnomolaijpmhkff', {name: 'crunchyParty'});
+      .connect('ihablaljfnaebapdcgnomolaijpmhkff', { name: 'crunchyParty' });
 
     async function getState(stateName) {
       const func = VILOS_PLAYERJS[stateName].bind(VILOS_PLAYERJS);
@@ -21,80 +21,57 @@
       return { paused, duration, currentTime };
     }
 
-    async function onPlay() {
-      if(ignoreNext.play) {
-        ignoreNext.play = false;
+    const handleLocalAction = action => async () => {
+      if (ignoreNext[action] === true) {
+        ignoreNext[action] = false;
+        return;
       }
 
-      crunchyPartyExtension.postMessage({ crunchyPartyAction: "play" });
-      console.log("Play", await getStates());
-    }
-
-    async function onPause() {
-      if(ignoreNext.pause) {
-        ignoreNext.pause = false;
-      }
-
-      crunchyPartyExtension.postMessage({ crunchyPartyAction: "pause" });
-      console.log("Pause", await getStates());
-    }
-
-    async function onReady() {
-      console.log("Ready", await getStates());
-    }
-
-    async function onEnded() {
-      console.log("Ended", await getStates());
-    }
-
-    async function onTimeUpdate() {
-      console.log("Time Update", await getStates());
-    }
-
-    async function onReceivePlay() {
-      const paused = await getState('getPaused');
-      if (paused) {
-        ignoreNext.play = true;
-        VILOS_PLAYERJS.play();
+      log(action, await getStates());
+      switch (action) {
+        case Actions.PLAY:
+        case Actions.PAUSE:
+          crunchyPartyExtension.postMessage({ localAction: action });
+          break;
       }
     }
 
-    async function onReceivePause() {
-      const paused = await getState('getPaused');
-      if (!paused) {
-        ignoreNext.pause = true;
-        VILOS_PLAYERJS.pause();
+    const handleRemoteAction = action => {
+      console.log({action});
+      ignoreNext[action] = true;
+
+      switch (action) {
+        case Actions.PAUSE:
+          VILOS_PLAYERJS.pause();
+          break;
+        case Actions.PLAY:
+          VILOS_PLAYERJS.play();
+          break;
+        default:
+          ignoreNext[action] = false;
       }
     }
 
-    VILOS_PLAYERJS.on("play", onPlay);
-    VILOS_PLAYERJS.on("pause", onPause);
-    VILOS_PLAYERJS.on("ready", onReady);
-    VILOS_PLAYERJS.on("ended", onEnded);
-    VILOS_PLAYERJS.on("timeupdate", onTimeUpdate);
+    Object.values(Actions).forEach(
+      action => VILOS_PLAYERJS.on(action, handleLocalAction(action))
+    );
 
     crunchyPartyExtension.onMessage.addListener(
       function (request) {
-        const action = request.crunchyPartyActionReceived;
-        console.log(`Received ${action} from server`);
-
-        switch (action) {
-          case "play":
-            onReceivePlay();
-            break;
-          case "pause":
-            onReceivePause();
-            break;
-          default:
-            break;
-        }
-      });
+        const action = request.remoteAction;
+        log(`Received ${action} from server`);
+        handleRemoteAction(action);
+      }
+    );
   };
 
-  if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
-    var script = document.createElement("script");
-    script.id = 'CRUNCHY_PARTY_SCRIPT';
-    script.textContent = `code = ${crunchyPartyScript.toString()};\n code();`;
-    (document.head).appendChild(script);
-  }
+  var commonScript = document.createElement("script");
+  commonScript.textContent = commonCode;
+
+  var script = document.createElement("script");
+  script.id = 'CRUNCHY_PARTY_SCRIPT';
+  script.textContent = `code = ${crunchyPartyScript.toString()};\n code();`;
+
+  (document.head).appendChild(commonScript);
+  (document.head).appendChild(script);
 }
