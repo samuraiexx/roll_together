@@ -8,18 +8,6 @@ function executeScript(tabId, obj) {
   );
 }
 
-function getParameterByName(url, name) {
-  const queryString = /\?[^#]+(?=#|$)|$/.exec(url)[0];
-  const regex = new RegExp("(?:[?&]|^)" + name + "=([^&#]*)");
-  const results = regex.exec(queryString);
-
-  if(!results || results.length < 2) {
-    return null;
-  }
-
-  return decodeURIComponent(results[1].replace(/\+/g, " "));
-}
-
 function update() {
   const roomId = background.roomId;
   if(roomId) {
@@ -34,18 +22,9 @@ update();
 
 actionButton.onclick = async function () {
   chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
-    tab = tabs[0];
-
-    const roomId = getParameterByName(tab.url, 'crunchyPartyRoom');
+    const roomId = getParameterByName(tabs[0].url);
     background.window.roomId = roomId;
 
-    const commonCodeResponse = await fetch('common.js');
-    const commonCode = await commonCodeResponse.text();
-
-    await executeScript(
-      tab.id, 
-      { code: `commonCode = \`${commonCode}\`;` }
-    );
-    await executeScript(tab.id, { file: 'content_script.js' });
+    injectScript(tabs[0]);
   });
 };

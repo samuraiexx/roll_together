@@ -93,6 +93,7 @@ if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
     sendInitialMessage();
   };
 
+  console.log({window, commonCode});
   var commonScript = document.createElement("script");
   commonScript.textContent = commonCode;
 

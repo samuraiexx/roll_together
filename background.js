@@ -14,6 +14,18 @@ function executeScript(tabId, obj) {
   );
 }
 
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+  if(window.roomId !== null) return;
+  if(!tab.url.startsWith('https://www.crunchyroll.com/')) return;
+
+  const roomId = getParameterByName(tab.url);
+  if(roomId === null) return;
+
+  window.roomId = roomId;
+  log('Injecting script...');
+  injectScript(tab);
+});
+
 chrome.runtime.onInstalled.addListener(function () {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
     chrome.declarativeContent.onPageChanged.addRules([{
@@ -28,14 +40,29 @@ chrome.runtime.onInstalled.addListener(function () {
 chrome.runtime.onConnectExternal.addListener(port => {
   webPageConnection = port;
 
+  webPageConnection.onDisconnect.addListener(
+    function () {
+      socket && socket.disconnect();
+      socket = null;
+      webPageConnection = null;
+      window.updatePopup = null;
+      window.roomId = null;
+    }
+  );
+
   webPageConnection.onMessage.addListener(
     function ({ currentProgress, initialMessage }) {
-      if(!initialMessage) return;
-      log('Initial message received from webpage', {currentProgress});
+      if (!initialMessage) return;
+      log('Initial message received from webpage', { currentProgress });
       connectWebsocket(currentProgress);
     }
   );
 });
+
+function sendStatusToWebpage(roomState, roomProgress) {
+  if (webPageConnection)
+    webPageConnection.postMessage({ roomState, roomProgress });
+}
 
 function connectWebsocket(videoProgress) {
   const { roomId, updatePopup } = window;
@@ -48,12 +75,12 @@ function connectWebsocket(videoProgress) {
     log('Sucessfully joined a room', { roomId, roomState, roomProgress });
     updatePopup && updatePopup();
 
-    webPageConnection.postMessage({ roomState, roomProgress });
+    sendStatusToWebpage(roomState, roomProgress);
   });
 
   socket.on('update', (id, roomState, roomProgress) => {
     log('Received update Message from ', id, { roomState, roomProgress });
-    webPageConnection.postMessage({ roomState, roomProgress });
+    sendStatusToWebpage(roomState, roomProgress);
   });
 
   webPageConnection.onMessage.addListener(
