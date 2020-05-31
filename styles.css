@@ -1,0 +1,92 @@
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: url('fonts/roboto-v20-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Roboto'), local('Roboto-Regular'),
+       url('fonts/roboto-v20-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('fonts/roboto-v20-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('fonts/roboto-v20-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('fonts/roboto-v20-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('fonts/roboto-v20-latin-regular.svg#Roboto') format('svg'); /* Legacy iOS */
+}
+
+body {
+  font-family: Roboto;
+  color: #333;
+  font-size: 15px;
+  line-height: 16px;
+}
+
+h1 {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+button {
+  cursor: pointer;
+  padding: 0px;
+  height: 41px;
+  width: 139px;
+  background-color: #F78C25;
+  color: #FFFFFF;
+  outline: none;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: 18px;
+  line-height: 21px;
+  font-weight: bold;
+  border: 0px solid #34c1e5;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #F57723;
+}
+
+button:active {
+  background-color: #db5e0a;
+}
+
+input {
+  line-height: 32px;
+  font-size: 18px;
+  width: 287px;
+  vertical-align: middle;
+  margin-bottom: 10px;
+  color: #444;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+
+.container {
+  width: 290px;
+  height: 205px;
+  background-color: white;
+  padding: 8px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  margin: auto;
+}
+
+.firstPage .secondPage {
+  display: none;
+}

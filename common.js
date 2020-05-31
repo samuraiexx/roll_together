@@ -12,36 +12,50 @@ const Actions = {
 
 const States = {
   PLAYING: 'playing',
-  PAUSED: 'paused'
+  PAUSED: 'paused',
+}
+
+const BackgroundMessageTypes = {
+  REMOTE_UPDATE: 'remote_update',
+  CONNECTION: 'connection'
+}
+
+const WebpageMessageTypes = {
+  LOCAL_UPDATE: 'local_update',
+  CONNECTION: 'connection',
 }
 
 function log() {
   const args = DISPLAY_DEBUG_TIME ? [(new Date()).toJSON()] : [];
   args.push(...arguments);
   return DEBUG && console.log(...args);
-} 
+}
 
 function getParameterByName(url, name = 'crunchyPartyRoom') {
   const queryString = /\?[^#]+(?=#|$)|$/.exec(url)[0];
   const regex = new RegExp("(?:[?&]|^)" + name + "=([^&#]*)");
   const results = regex.exec(queryString);
 
-  if(!results || results.length < 2) {
+  if (!results || results.length < 2) {
     return null;
   }
 
   return decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
-// Shared Script End
+function updateQueryStringParameter(uri, key, value) {
+  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+  var separator = uri.indexOf('?') !== -1 ? "&" : "?";
+  if (uri.match(re)) {
+    return uri.replace(re, '$1' + key + "=" + value + '$2');
+  }
+  else {
+    return uri + separator + key + "=" + value;
+  }
+}
 
-const injectScript = async (tab) => {
-    const commonCodeResponse = await fetch('common.js');
-    const commonCode = (await commonCodeResponse.text()).split('// Shared Script End')[0];
-
-    await executeScript(
-      tab.id, 
-      { code: `commonCode = \`${commonCode}\`;` }
-    );
-    await executeScript(tab.id, { file: 'content_script.js' });
+function executeScript(tabId, obj) {
+  return new Promise(
+    callback => chrome.tabs.executeScript(tabId, obj, callback)
+  );
 }

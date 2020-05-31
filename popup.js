@@ -1,6 +1,10 @@
-const actionButton = document.getElementById('crunchy-party');
 const background = chrome.extension.getBackgroundPage();
-const roomIdContainer = document.getElementById('room-id-container');
+let connected = false;
+
+const createRoomButton = document.getElementById('createRoom');
+const copyUrlButton = document.getElementById('copyUrl');
+const disconnectButton = document.getElementById('disconnect');
+const urlInput = document.getElementById('urlInput');
 
 function executeScript(tabId, obj) {
   return new Promise(
@@ -9,22 +13,51 @@ function executeScript(tabId, obj) {
 }
 
 function update() {
-  const roomId = background.roomId;
-  if(roomId) {
-    roomIdContainer.innerHTML = roomId;
-    const clipBoard = navigator.clipboard;
-    clipBoard && clipBoard.writeText(roomId).catch(error => {}); //Do nothing on Error
+  const roomId = background.window.getRoomId();
+  const connected = roomId != null;
+  log('Updating Popup...', { roomId, connected });
+
+  if (connected) {
+    chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
+      const roomId = background.window.getRoomId();
+      const url = updateQueryStringParameter(tabs[0].url, 'crunchyPartyRoom', roomId)
+      urlInput.value = url;
+      urlInput.focus();
+      urlInput.select();
+    });
+
+    [...document.getElementsByClassName('firstPage')].forEach(el => el.style.display = 'none');
+    [...document.getElementsByClassName('secondPage')].forEach(el => el.style = {});
+  } else {
+    [...document.getElementsByClassName('firstPage')].forEach(el => el.style = {});
+    [...document.getElementsByClassName('secondPage')].forEach(el => el.style.display = 'none');
   }
 }
 background.window.updatePopup = update;
 update();
 
+window.addEventListener('beforeunload', () => {
+  background.window.updatePopup = null;
+});
 
-actionButton.onclick = async function () {
+createRoomButton.onclick = async function () {
+  log('Clicking CreateRoomButton');
   chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
-    const roomId = getParameterByName(tabs[0].url);
-    background.window.roomId = roomId;
-
-    injectScript(tabs[0]);
+    background.window.createRoom(tabs[0]);
   });
 };
+
+copyUrlButton.onclick = function () {
+  log('Clicking CopyUrlButton');
+  urlInput.focus();
+  urlInput.select();
+  document.execCommand('copy');
+}
+
+disconnectButton.onclick = function () {
+  log('Clicking DisconnectButton');
+  background.window.disconnectRoom();
+}
+
+urlInput.onclick = function () {
+}

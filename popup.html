@@ -1,21 +1,33 @@
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <style>
-        button {
-          height: 30px;
-          width: 30px;
-          outline: none;
-        }
-        body {
-          width: 60px;
-        }
-      </style>
-    </head>
-    <body>
-      <p>You room id is <span id="room-id-container"></span></p>
-      <button id="crunchy-party"></button>
-    </body>
-    <script src="common.js"></script>
-    <script src="popup.js"></script>
-  </html>
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1 id="title">Crunchy Party</h1>
+    <p id="description" class="firstPage">Click on the button bellow to create a room and watch anime with your friends
+    </p>
+    <p id="description" class="secondPage">Share the URL bellow to invite others to watch synchronized with you.</p>
+    <input class="secondPage" id="urlInput" />
+    <div class="secondPage buttonContainer">
+      <button>
+        <div class="center" id="copyUrl">Copy URL</div>
+      </button>
+      <button>
+        <div class="center" id="disconnect">Disconnect</div>
+      </button>
+    </div>
+    <div class="center firstPage">
+      <button>
+        <div class="center" id="createRoom">Create Room</div>
+      </button>
+    </div>
+  </div>
+</body>
+<script src="common.js"></script>
+<script src="popup.js"></script>
+
+</html>
