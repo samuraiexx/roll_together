@@ -18,7 +18,7 @@ function update() {
   log('Updating Popup...', { roomId, connected });
 
   if (connected) {
-    chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       const roomId = background.window.getRoomId();
       const url = updateQueryStringParameter(tabs[0].url, 'crunchyPartyRoom', roomId)
       urlInput.value = url;

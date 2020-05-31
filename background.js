@@ -28,7 +28,7 @@ chrome.runtime.onInstalled.addListener(function () {
   });
 });
 
-function updatePopup() {
+function tryUpdatePopup() {
   const { updatePopup } = window;
 
   try {
@@ -43,7 +43,7 @@ function disconnectWebsocket() {
   socket = null;
   roomId = null;
 
-  updatePopup();
+  tryUpdatePopup();
 }
 
 chrome.runtime.onConnectExternal.addListener(port => {
@@ -99,7 +99,7 @@ function connectWebsocket(videoProgress, videoState, urlRoomId) {
   socket.on('join', (receivedRoomId, roomState, roomProgress) => {
     roomId = receivedRoomId;
     log('Sucessfully joined a room', { roomId, roomState, roomProgress });
-    updatePopup();
+    tryUpdatePopup();
 
     sendUpdateToWebpage(roomState, roomProgress);
   });
