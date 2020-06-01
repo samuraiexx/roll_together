@@ -1,5 +1,6 @@
 {
   "name": "Crunchy Party",
+  "default_locale": "en",
   "version": "0.1",
   "description": "It's an extension that lets you and a friend syncronize your anime so you can watch together =]",
   "background": {
@@ -8,13 +9,20 @@
       "socket.io.js",
       "background.js"
     ],
-    "persistent": true 
+    "persistent": true
   },
   "externally_connectable": {
-    "matches": ["*://www.crunchyroll.com/*"]
+    "matches": [
+      "*://www.crunchyroll.com/*"
+    ]
   },
   "content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
-  "permissions": ["tabs", "activeTab", "declarativeContent", "*://www.crunchyroll.com/*"],
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "declarativeContent",
+    "*://www.crunchyroll.com/*"
+  ],
   "page_action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -23,6 +31,12 @@
       "48": "images/get_started48.png",
       "128": "images/get_started128.png"
     }
+  },
+  "icons": {
+    "16": "images/get_started16.png",
+    "32": "images/get_started32.png",
+    "48": "images/get_started48.png",
+    "128": "images/get_started128.png"
   },
   "manifest_version": 2,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArcGab+PzppC/+XejE0z7kusfAXlu5DA5nUgFsfMAhOaSdtuBHClmRt6Sxg4IBSADQ3IFX7CnrlS/wWEf2XheU+Ou1Uj7hKpEnI3ThCX6qJyz2GD200ywQmNVS++TOqoQV03nbfSUsHVLJm+HqYxZBlVVlmWk6mgjIwxjOI87DmUIx+VOjv+rtBYaaUg+38Ri/ROYiAFaewUfIQVFZuRuYHc5klg788rUmX4E2pl2e+UPFlzdfYatGBoVV2lQhP4g0NtfwvbOE6sOW3VDCAwrNyqz/3LDldIwyZHtYUOesvI/g0CrFi0faO0kkMJsTjGMyPLRwfnNau/TkKqLfCswxQIDAQAB"
