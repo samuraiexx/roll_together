@@ -9,8 +9,9 @@ It will be soon available to download on Google Webstore. If you want to add thi
 2. Enable Developer Mode by clicking the toggle switch next to Developer mode.
 3. Click the LOAD UNPACKED button and select the extension directory.
 
-Instructions from https://developer.chrome.com/extensions/getstarted
+![](https://developer.chrome.com/static/images/get_started/load_extension.png)
 
+Instructions from https://developer.chrome.com/extensions/getstarted
 ## TODO
 - [ ] Create a Website
 - [ ] Improve structure to allow more than one tab at the same time
