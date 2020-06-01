@@ -11,7 +11,7 @@ It will be soon available to download on Google Webstore. If you want to add thi
 
 Instructions from https://developer.chrome.com/extensions/getstarted
 
-## TODO:
+## TODO
 - [ ] Create a Website
 - [ ] Improve structure to allow more than one tab at the same time
 - [ ] Work with autoplay
