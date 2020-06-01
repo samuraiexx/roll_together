@@ -8,7 +8,7 @@
       "socket.io.js",
       "background.js"
     ],
-    "persistent": false
+    "persistent": true 
   },
   "externally_connectable": {
     "matches": ["*://www.crunchyroll.com/*"]
