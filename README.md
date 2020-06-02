@@ -2,7 +2,7 @@
 Crunchy Party is an extension for Google Chrome. It synchronizes Crunchyroll Videos that are being played at multiple computers.
 
 ## How to use it
-It will be soon available to download on Google Webstore. If you want to add this extension from the source code, you can download this repo and follow the instructions below.
+You can download it from Chrome Store using the following link [https://chrome.google.com/webstore/detail/ilpfeljgdikoabaclkjgkbeegeoijfca/publish-accepted?authuser=0&hl=pt-PT](https://chrome.google.com/webstore/detail/ilpfeljgdikoabaclkjgkbeegeoijfca/publish-accepted?authuser=0&hl=pt-PT). If you want to add this extension from the source code, you can download this repo and follow the instructions below.
 
 1. Open the Extension Management page by navigating to chrome://extensions.
     - The Extension Management page can also be opened by clicking on the Chrome menu, hovering over More Tools then select Extensions.
