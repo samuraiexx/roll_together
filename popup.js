@@ -20,7 +20,7 @@ function update() {
   if (connected) {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       const roomId = background.window.getRoomId();
-      const url = updateQueryStringParameter(tabs[0].url, 'crunchyPartyRoom', roomId)
+      const url = updateQueryStringParameter(tabs[0].url, 'rollTogetherRoom', roomId)
       urlInput.value = url;
       urlInput.focus();
       urlInput.select();

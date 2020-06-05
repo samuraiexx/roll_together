@@ -1,5 +1,5 @@
-# Crunchy Party
-Crunchy Party is an extension for Google Chrome. It synchronizes Crunchyroll Videos that are being played at multiple computers.
+# Roll Together
+Roll Together is an extension for Google Chrome. It synchronizes Crunchyroll Videos that are being played at multiple computers.
 
 ## How to use it
 You can download it from Chrome Store using the following link [https://chrome.google.com/webstore/detail/ilpfeljgdikoabaclkjgkbeegeoijfca](https://chrome.google.com/webstore/detail/ilpfeljgdikoabaclkjgkbeegeoijfca). If you want to add this extension from the source code, you can download this repo and follow the instructions below.
@@ -19,4 +19,4 @@ Instructions from https://developer.chrome.com/extensions/getstarted
 - [ ] Improve Logo/Name
 
 ## Related Repos
-Backend repo: https://github.com/samuraiexx/crunchy_party_backend
+Backend repo: https://github.com/samuraiexx/roll_together_backend

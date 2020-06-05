@@ -94,7 +94,7 @@ function connectWebsocket(videoProgress, videoState, urlRoomId) {
 
   let query = `videoProgress=${Math.round(videoProgress)}&videoState=${videoState}${(urlRoomId ? `&room=${urlRoomId}` : '')}`;
 
-  socket = io('https://crunchy-party.herokuapp.com/', { query });
+  socket = io('https://roll-together.herokuapp.com/', { query });
 
   socket.on('join', (receivedRoomId, roomState, roomProgress) => {
     roomId = receivedRoomId;

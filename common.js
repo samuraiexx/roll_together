@@ -31,7 +31,7 @@ function log() {
   return DEBUG && console.log(...args);
 }
 
-function getParameterByName(url, name = 'crunchyPartyRoom') {
+function getParameterByName(url, name = 'rollTogetherRoom') {
   const queryString = /\?[^#]+(?=#|$)|$/.exec(url)[0];
   const regex = new RegExp("(?:[?&]|^)" + name + "=([^&#]*)");
   const results = regex.exec(queryString);

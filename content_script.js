@@ -1,11 +1,11 @@
-if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
-  crunchyPartyScript = () => {
+if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
+  rollTogetherScript = () => {
     const ignoreNext = {};
     let lastFrameProgress = null;
 
-    const crunchyPartyExtension = chrome
+    const rollTogetherExtension = chrome
       .runtime
-      .connect('ihablaljfnaebapdcgnomolaijpmhkff', { name: 'crunchyParty' });
+      .connect('ihablaljfnaebapdcgnomolaijpmhkff', { name: 'rollTogether' });
 
     async function getState(stateName) {
       const func = VILOS_PLAYERJS[stateName].bind(VILOS_PLAYERJS);
@@ -41,10 +41,10 @@ if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
       switch (action) {
         case Actions.PLAY:
         case Actions.PAUSE:
-          crunchyPartyExtension.postMessage({ type, state, currentProgress });
+          rollTogetherExtension.postMessage({ type, state, currentProgress });
           break;
         case Actions.TIMEUPDATE:
-          timeJump && crunchyPartyExtension.postMessage({ type, state, currentProgress });
+          timeJump && rollTogetherExtension.postMessage({ type, state, currentProgress });
           break;
       }
     }
@@ -72,7 +72,7 @@ if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
       const { state, currentProgress } = await getStates();
       const urlRoomId = getParameterByName(window.location.href);
       const type = WebpageMessageTypes.CONNECTION;
-      crunchyPartyExtension.postMessage(
+      rollTogetherExtension.postMessage(
         { state, currentProgress, urlRoomId, type }
       );
     }
@@ -108,15 +108,15 @@ if (document.getElementById('CRUNCHY_PARTY_SCRIPT') == null) {
       action => VILOS_PLAYERJS.on(action, handleLocalAction(action))
     );
 
-    crunchyPartyExtension.onMessage.addListener(handleBackgroundMessage);
+    rollTogetherExtension.onMessage.addListener(handleBackgroundMessage);
   };
 
   var commonScript = document.createElement("script");
   commonScript.textContent = commonCode;
 
   var script = document.createElement("script");
-  script.id = 'CRUNCHY_PARTY_SCRIPT';
-  script.textContent = `code = ${crunchyPartyScript.toString()};\n code();`;
+  script.id = 'ROLL_TOGETHER_SCRIPT';
+  script.textContent = `code = ${rollTogetherScript.toString()};\n code();`;
 
   (document.head).appendChild(commonScript);
   (document.head).appendChild(script);
