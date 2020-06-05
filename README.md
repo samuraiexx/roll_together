@@ -17,6 +17,7 @@ Instructions from https://developer.chrome.com/extensions/getstarted
 - [ ] Improve structure to allow more than one tab at the same time
 - [ ] Work with autoplay
 - [ ] Improve Logo/Name
+- [ ] Customizable Palette
 
 ## Related Repos
 Backend repo: https://github.com/samuraiexx/crunchy_party_backend
