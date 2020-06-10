@@ -6,29 +6,41 @@ let crunchyrollOrange = "#F78C25";
 
 const colorOptions = [ googleGreen, googleAquaBlue, crunchyrollOrange ];
 
+let submitButton = document.getElementById("submitButton");
+
+submitButton.onclick = function() {
+  let confirmationMessage;
+  let color = document.getElementById("colorInput").value;
+  let isOk = /^#[0-9A-F]{6}$/i.test(color);
+
+  if(isOk) {
+    confirmationMessage = "Sucessfuly changed!";
+    console.log("Color changed to " + color);
+    setExtensionColor(color);
+  } else {
+    confirmationMessage = "Invalid hex code!";
+    console.log("Invalid input");
+  }
+
+  document.getElementById("confirmationMessage").innerHTML = confirmationMessage;
+}
+
+function setExtensionColor(color) {
+      chrome.storage.sync.set({extensionColor: color}, function() {
+        console.log("Setting extension color to " + color);
+      });
+}
+
 function buildButtons(colorOptions) {
   let page = document.getElementById("buttonDiv");
 
   for(let color of colorOptions) {
     let newButton = document.createElement("button");
-    newButton.addEventListener("click", function() { 
-      chrome.storage.sync.set({extensionColor: color}, function() {
-        console.log("Setting extension color to " + color);
-      })
-    });
+    newButton.addEventListener("click", function() { setExtensionColor(color) } );
     newButton.style.backgroundColor = color;
     newButton.className = "colorChangeButton"
     page.appendChild(newButton);
   }
-}
-
-function setColor() {
-  console.log("function called");
-  let color = localStorage.getItem("color");
-
-  let optionsButtons = document.querySelectorAll("button");
-  console.log(optionsButtons);
-  for(button of optionsButtons) button.style.backgroundColor = color;
 }
 
 buildButtons(colorOptions);

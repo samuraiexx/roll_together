@@ -46,6 +46,21 @@ button {
   border-radius: 4px;
 }
 
+input {
+  padding: 0px;
+  width: 75%;
+  height: 41px;
+  color: #FFFFFF;
+  outline: none;
+  align-items: center;
+  text-align: center;
+  font-size: 18px;
+  line-height: 21px;
+  font-weight: bold;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
 #buttonDiv {
   display: inline-flex;
   justify-content: space-between;
