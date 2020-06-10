@@ -6,6 +6,20 @@ const copyUrlButton = document.getElementById('copyUrl');
 const disconnectButton = document.getElementById('disconnect');
 const urlInput = document.getElementById('urlInput');
 
+//chrome.storage.sync.set({ extensionColor: color }, function () {
+//  console.log("Setting extension color to " + color);
+//});
+
+chrome.storage.sync.get('extensionColor', function (data) {
+  let optionButtons = document.getElementsByClassName("optionsButton");
+
+  for (button of optionButtons) {
+    console.log("Color of " + button.id + " is now " + data.extensionColor);
+    button.style.backgroundColor = data.extensionColor;
+  }
+});
+
+
 function executeScript(tabId, obj) {
   return new Promise(
     callback => chrome.tabs.executeScript(tabId, obj, callback)
