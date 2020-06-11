@@ -33,6 +33,7 @@ chrome.storage.sync.get({'extensionColor': crunchyrollOrange}, function (data) {
 function setExtensionColor(color) {
   chrome.storage.sync.set({ extensionColor: color }, function () {
     log("Setting extension color to " + color);
+    input.value = color;
   });
   submitButton.style.backgroundColor = color;
 }
