@@ -8,7 +8,11 @@ let roomId = null;
 
 loadStyles();
 
+chrome.tabs.onActivated.addListener(({tabId}) => getExtensionColor().then(color => setIconColor(tabId, color )));
+
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  getExtensionColor().then(color => setIconColor(tabId, color ));
+
   if (roomId != null) return;
   if (!tab.url.startsWith('https://www.crunchyroll.com/')) return;
 
@@ -29,11 +33,6 @@ chrome.runtime.onInstalled.addListener(function () {
     }]);
   });
 });
-
-chrome.tabs.onActivated.addListener(async function ({tabId}) {
-  const color = await getExtensionColor();
-  setIconColor(tabId, color);
-})
 
 function tryUpdatePopup() {
   const { updatePopup } = window;

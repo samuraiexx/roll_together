@@ -4,11 +4,14 @@ const googleGreen = "#009688";
 const googleAquaBlue = "#00BBD3";
 
 const input = document.getElementById("colorInput");
-getExtensionColor().then(color => input.color = color);
+let submitButton = document.getElementById("submitButton");
+
+getExtensionColor().then(color => {
+  input.value = color;
+  submitButton.style.backgroundColor = color;
+});
 
 const colorOptions = [ googleGreen, googleAquaBlue, crunchyrollOrange ];
-
-let submitButton = document.getElementById("submitButton");
 
 submitButton.onclick = function() {
   let color = document.getElementById("colorInput").value;
@@ -36,7 +39,7 @@ function setExtensionColor(color) {
 input.addEventListener("keyup", function(event) {
   if (event.keyCode === 13) {
     event.preventDefault();
-    document.getElementById("").click();
+    submitButton.click();
   }
 });
 
@@ -45,7 +48,7 @@ function buildButtons(colorOptions) {
 
   for (let color of colorOptions) {
     let newButton = document.createElement("button");
-    newButton.addEventListener("click", function () { input.value = color; });
+    newButton.addEventListener("click", function () { input.value = color });
     newButton.style.backgroundColor = color;
     newButton.className = "colorChangeButton"
     page.appendChild(newButton);
