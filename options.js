@@ -1,10 +1,10 @@
 let page = document.getElementById('colorSelector');
 
-let googleGreen = "#009688";
-let googleAquaBlue = "#00BBD3";
-let crunchyrollOrange = "#F78C25";
+const googleGreen = "#009688";
+const googleAquaBlue = "#00BBD3";
 
 const input = document.getElementById("colorInput");
+getExtensionColor().then(color => input.color = color);
 
 const colorOptions = [ googleGreen, googleAquaBlue, crunchyrollOrange ];
 
@@ -25,10 +25,6 @@ submitButton.onclick = function() {
   setExtensionColor(color);
   log("Color changed to " + color);
 }
-
-chrome.storage.sync.get({'extensionColor': crunchyrollOrange}, function (data) {
-  input.value = data.extensionColor;
-});
 
 function setExtensionColor(color) {
   chrome.storage.sync.set({ extensionColor: color }, function () {

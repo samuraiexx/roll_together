@@ -1,6 +1,7 @@
 const DEBUG = true;
 const DISPLAY_DEBUG_TIME = false;
 const LIMIT_DELTA_TIME = 3; // In Seconds
+const crunchyrollOrange = "#F78C25";
 
 const Actions = {
   PLAY: 'play',
@@ -58,4 +59,12 @@ function executeScript(tabId, obj) {
   return new Promise(
     callback => chrome.tabs.executeScript(tabId, obj, callback)
   );
+}
+
+function getExtensionColor() {
+  return new Promise(callback => {
+    chrome.storage.sync.get({ 'extensionColor': crunchyrollOrange }, function (data) {
+      callback(data.extensionColor);
+    });
+  });
 }
