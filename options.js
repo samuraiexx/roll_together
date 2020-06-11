@@ -15,28 +15,33 @@ submitButton.onclick = function() {
 
   if(isOk) {
     confirmationMessage = "Sucessfuly changed!";
-    console.log("Color changed to " + color);
+    log("Color changed to " + color);
     setExtensionColor(color);
   } else {
     confirmationMessage = "Invalid hex code!";
-    console.log("Invalid input");
+    log("Invalid input");
   }
 
   document.getElementById("confirmationMessage").innerHTML = confirmationMessage;
 }
 
+chrome.storage.sync.get('extensionColor', function (data) {
+  document.getElementById("colorInput").value = data.extensionColor;
+});
+
 function setExtensionColor(color) {
-      chrome.storage.sync.set({extensionColor: color}, function() {
-        console.log("Setting extension color to " + color);
-      });
+  chrome.storage.sync.set({ extensionColor: color }, function () {
+    log("Setting extension color to " + color);
+  });
+  document.getElementById("colorInput").value = color;
 }
 
 function buildButtons(colorOptions) {
   let page = document.getElementById("buttonDiv");
 
-  for(let color of colorOptions) {
+  for (let color of colorOptions) {
     let newButton = document.createElement("button");
-    newButton.addEventListener("click", function() { setExtensionColor(color) } );
+    newButton.addEventListener("click", function () { setExtensionColor(color) });
     newButton.style.backgroundColor = color;
     newButton.className = "colorChangeButton"
     page.appendChild(newButton);

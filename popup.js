@@ -10,7 +10,7 @@ chrome.storage.sync.get('extensionColor', function (data) {
   let optionButtons = document.getElementsByClassName("actionButton");
 
   for (button of optionButtons) {
-    console.log("Color of " + button.id + " is now " + data.extensionColor);
+    log("Color of " + button.id + " is now " + data.extensionColor);
     button.style.backgroundColor = data.extensionColor;
   }
 });
