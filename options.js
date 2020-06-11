@@ -11,13 +11,13 @@ const colorOptions = [ googleGreen, googleAquaBlue, crunchyrollOrange ];
 let submitButton = document.getElementById("submitButton");
 
 submitButton.onclick = function() {
-  let confirmationMessage;
   let color = document.getElementById("colorInput").value;
   let isOk = /^#[0-9A-F]{6}$/i.test(color);
+  const confirmationMessage = document.getElementById("confirmationMessage");
+  confirmationMessage.innerText = "";
 
   if (!isOk) {
-    confirmationMessage = "Invalid hex code!";
-    document.getElementById("confirmationMessage").innerHTML = confirmationMessage;
+    confirmationMessage.innerText = "Invalid hex code!";
     log("Invalid input");
     return;
   }
