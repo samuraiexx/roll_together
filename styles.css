@@ -46,12 +46,39 @@ button {
   border-radius: 4px;
 }
 
+input {
+  padding: 0px;
+  width: 75%;
+  height: 41px;
+  color: #FFFFFF;
+  outline: none;
+  align-items: center;
+  text-align: center;
+  font-size: 18px;
+  line-height: 21px;
+  font-weight: bold;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+#buttonDiv {
+  display: inline-flex;
+  justify-content: space-between;
+  width: 150px;
+}
+.colorChangeButton {
+  border: 1px solid #333;
+  height: 30px;
+  width: 30px;
+  display: inline-flex;
+}
+
 button:hover {
-  background-color: #F57723;
+  filter: brightness(95%);
 }
 
 button:active {
-  background-color: #db5e0a;
+  filter: brightness(85%);
 }
 
 input {
