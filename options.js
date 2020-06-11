@@ -49,7 +49,7 @@ function buildButtons(colorOptions) {
 
   for (let color of colorOptions) {
     let newButton = document.createElement("button");
-    newButton.addEventListener("click", function () { input.value = color; });
+    newButton.addEventListener("click", function () { setExtensionColor(color); });
     newButton.style.backgroundColor = color;
     newButton.className = "colorChangeButton"
     page.appendChild(newButton);
