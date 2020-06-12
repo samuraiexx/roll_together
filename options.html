@@ -5,23 +5,21 @@
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 
-<body>
-  <div style="text-align: center;">
-    <p>Select the extension color:</p>
-    <div id="buttonDiv">
-    </div>
-    <br><br>
-    <div>
+<body class="optionsBody mt32">
+  <div class="optionsContainer">
+    <h1 class="mt32 mb16">Roll Together Options</h1>
+    <h2>Select a primary color for this extension</h2>
+    <div id="colorSelector" class="mb16"></div>
       <input id="colorInput" type="text" value="">
-      <br>
-      <input id="submitButton" type="submit" value="Change!">
-      <br>
-      <h id="confirmationMessage"> </p>
-    </div>
-    
-    </div>
-    </body>
-    <script src="common.js"></script>
-    <script src="options.js"></script>
-    
-    </html>
+      <div class="actionButtonContainer"> 
+        <button class="mt16 actionButton" id="addButton">Add Color</button>
+        <button class="mt16 actionButton" id="removeButton">Remove Color</button>
+      </div>
+      <p id="confirmationMessage" class="c-error"></p>
+    </div>  
+  </div>
+</body>
+<script src="common.js"></script>
+<script src="options.js"></script>
+
+</html>

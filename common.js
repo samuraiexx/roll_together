@@ -1,6 +1,10 @@
 const DEBUG = true;
 const DISPLAY_DEBUG_TIME = false;
 const LIMIT_DELTA_TIME = 3; // In Seconds
+const googleGreen = "#009688";
+const googleAquaBlue = "#00BBD3";
+const crunchyrollOrange = "#F78C25";
+const defaultcolorOptions = [googleGreen, googleAquaBlue, crunchyrollOrange];
 
 const Actions = {
   PLAY: 'play',
@@ -58,4 +62,20 @@ function executeScript(tabId, obj) {
   return new Promise(
     callback => chrome.tabs.executeScript(tabId, obj, callback)
   );
+}
+
+function getExtensionColor() {
+  return new Promise(callback => {
+    chrome.storage.sync.get({ extensionColor: crunchyrollOrange }, function (data) {
+      callback(data.extensionColor);
+    });
+  });
+}
+
+function getColorMenu() {
+  return new Promise(callback => {
+    chrome.storage.sync.get({ colorOptions: defaultcolorOptions }, function (data) {
+      callback(data.colorOptions);
+    });
+  });
 }
