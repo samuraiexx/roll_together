@@ -11,8 +11,12 @@
     <h2>Select a primary color for this extension</h2>
     <div id="colorSelector" class="mb16"></div>
       <input id="colorInput" type="text" value="">
-      <button class="mt16" id="submitButton">Change Color!</button>
-      <p id="confirmationMessage" class="c-error">
+      <div class="actionButtonContainer"> 
+        <button class="mt16 actionButton" id="addButton">Add Color</button>
+        <button class="mt16 actionButton" id="removeButton">Remove Color</button>
+      </div>
+      <p id="confirmationMessage" class="c-error"></p>
+    </div>  
   </div>
 </body>
 <script src="common.js"></script>

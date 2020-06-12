@@ -15,7 +15,6 @@ chrome.storage.sync.get('extensionColor', function (data) {
   }
 });
 
-
 function executeScript(tabId, obj) {
   return new Promise(
     callback => chrome.tabs.executeScript(tabId, obj, callback)
