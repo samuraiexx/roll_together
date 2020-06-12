@@ -79,13 +79,14 @@ button {
 .optionsButtonContainer {
   display: inline-flex;
   width: 250px;
-  justify-content: space-around;
+  justify-content: space-evenly;
 }
 
 .optionButton {
   display: flex;
   height: 41px;
-  width: 100px;
+  width: auto;
+  padding: 10px;
   font-size: 14px;
 }
 
