@@ -76,13 +76,13 @@ button {
   border-radius: 4px;
 }
 
-.actionButtonContainer {
+.optionsButtonContainer {
   display: inline-flex;
   width: 250px;
   justify-content: space-around;
 }
 
-.actionButton {
+.optionButton {
   display: flex;
   height: 41px;
   width: 100px;
