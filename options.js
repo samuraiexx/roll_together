@@ -3,6 +3,7 @@ let addButton = document.getElementById("addButton");
 let removeButton = document.getElementById("removeButton");
 const input = document.getElementById("colorInput");
 const confirmationMessage = document.getElementById("confirmationMessage");
+const maxMenuSize = 10;
 
 getExtensionColor().then(color => updateExtensionColor(color));
 getColorMenu().then(colorOptions => buildButtons(colorOptions));
@@ -34,9 +35,15 @@ function colorCodeValidation(color) {
 addButton.onclick = function() {
   const color = input.value.toUpperCase();
 
-  if(!colorCodeValidation(color)) return;
-
   getColorMenu().then( colorOptions => {
+    if(colorOptions.length === maxMenuSize) {
+      confirmationMessage.innerText = "You have reached the maximum menu size!";
+      log("Max menu size reached");
+      return;
+    }
+
+    if(!colorCodeValidation(color)) return;
+
     const isInMenu = colorOptions.includes(color);
 
     if(isInMenu) {
