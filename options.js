@@ -1,23 +1,40 @@
 let page = document.getElementById('colorSelector');
-
-const input = document.getElementById("colorInput");
-getExtensionColor().then(color => setExtensionColor(color));
-getColorMenu().then(colorOptions => buildButtons(colorOptions));
-
 let addButton = document.getElementById("addButton");
 let removeButton = document.getElementById("removeButton");
+const input = document.getElementById("colorInput");
+const confirmationMessage = document.getElementById("confirmationMessage");
 
-addButton.onclick = function() {
-  const color = document.getElementById("colorInput").value.toUpperCase();
-  const isOk = /^#([0-9A-F]{3}){1,2}$/i.test(color);
-  const confirmationMessage = document.getElementById("confirmationMessage");
+getExtensionColor().then(color => updateExtensionColor(color));
+getColorMenu().then(colorOptions => buildButtons(colorOptions));
+
+function updateExtensionColor(color) {
+  input.value = color;
+  addButton.style.backgroundColor = color;
+  removeButton.style.backgroundColor = color;
+}
+
+function updateColorMenu(colorOptions) {
+  while(page.lastChild) page.removeChild(page.lastChild);
+  buildButtons(colorOptions);
+}
+
+function colorCodeValidation(color) {
   confirmationMessage.innerText = "";
+  const isOk = /^#([0-9A-F]{3}){1,2}$/i.test(color);
 
   if (!isOk) {
     confirmationMessage.innerText = "Invalid hex code!";
     log("Invalid input");
-    return;
+    return false;
   }
+
+  return true;
+}
+
+addButton.onclick = function() {
+  const color = input.value.toUpperCase();
+
+  if(!colorCodeValidation(color)) return;
 
   getColorMenu().then( colorOptions => {
     const isInMenu = colorOptions.includes(color);
@@ -29,25 +46,19 @@ addButton.onclick = function() {
     }
 
     setExtensionColor(color);
+    updateExtensionColor(color);
+
     colorOptions.push(color);
-
+    
     setColorMenu(colorOptions);
-    document.location.reload();
-
+    updateColorMenu(colorOptions);
   }); 
 }
 
 removeButton.onclick = function() {
-  const color = document.getElementById("colorInput").value.toUpperCase();
-  const isOk = /^#([0-9A-F]{3}){1,2}$/i.test(color);
-  const confirmationMessage = document.getElementById("confirmationMessage");
-  confirmationMessage.innerText = "";
+  const color = input.value.toUpperCase();
 
-  if (!isOk) {
-    confirmationMessage.innerText = "Invalid hex code!";
-    log("Invalid input");
-    return;
-  }
+  if(!colorCodeValidation(color)) return;
 
   if(color === crunchyrollOrange) {
     confirmationMessage.innerText = "You can't remove this color!";
@@ -72,14 +83,13 @@ removeButton.onclick = function() {
     });
 
     setColorMenu(colorOptions);
-    document.location.reload();
-
+    updateColorMenu(colorOptions);
   });
 }
 
 function setColorMenu(colorMenu) {
   chrome.storage.sync.set({ colorOptions: colorMenu }, function () {
-    log("Removing " + color + " from the color menu");
+    log("Color menu updated");
   });
 }
 
@@ -87,23 +97,23 @@ function setExtensionColor(color) {
   chrome.storage.sync.set({ extensionColor: color }, function () {
     log("Setting extension color to " + color);
   });
-
-  input.value = color;
-  addButton.style.backgroundColor = color;
-  removeButton.style.backgroundColor = color;
 }
 
 input.addEventListener("keyup", function(event) {
   if (event.keyCode === 13) {
     event.preventDefault();
-    document.getElementById("").click();
+    let color = input.value;
+    if(colorCodeValidation(color)) updateExtensionColor(color);
   }
 });
 
 function buildButtons(colorOptions) {
   for (let color of colorOptions) {
     let newButton = document.createElement("button");
-    newButton.addEventListener("click", function () { setExtensionColor(color); });
+    newButton.addEventListener("click", function () { 
+      setExtensionColor(color); 
+      updateExtensionColor(color);
+    });
     newButton.style.backgroundColor = color;
     newButton.className = "colorChangeButton"
     page.appendChild(newButton);
