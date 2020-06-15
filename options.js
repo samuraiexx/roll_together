@@ -1,4 +1,4 @@
-let page = document.getElementById('colorSelector');
+const page = document.getElementById("colorSelector");
 let addButton = document.getElementById("addButton");
 let removeButton = document.getElementById("removeButton");
 const input = document.getElementById("colorInput");
@@ -105,14 +105,6 @@ function setExtensionColor(color) {
     log("Setting extension color to " + color);
   });
 }
-
-input.addEventListener("keyup", function(event) {
-  if (event.keyCode === 13) {
-    event.preventDefault();
-    let color = input.value;
-    if(colorCodeValidation(color)) updateExtensionColor(color);
-  }
-});
 
 function buildButtons(colorOptions) {
   for (let color of colorOptions) {
