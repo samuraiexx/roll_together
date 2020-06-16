@@ -1,4 +1,4 @@
-const page = document.getElementById("colorSelector");
+const colorSelector = document.getElementById("colorSelector");
 let addButton = document.getElementById("addButton");
 let removeButton = document.getElementById("removeButton");
 const input = document.getElementById("colorInput");
@@ -15,7 +15,7 @@ function updateExtensionColor(color) {
 }
 
 function updateColorMenu(colorOptions) {
-  while(page.lastChild) page.removeChild(page.lastChild);
+  while(colorSelector.lastChild) colorSelector.removeChild(colorSelector.lastChild);
   buildButtons(colorOptions);
 }
 
@@ -110,11 +110,11 @@ function buildButtons(colorOptions) {
   for (let color of colorOptions) {
     let newButton = document.createElement("button");
     newButton.addEventListener("click", function () { 
-      setExtensionColor(color); 
+      setExtensionColor(color);
       updateExtensionColor(color);
     });
     newButton.style.backgroundColor = color;
     newButton.className = "colorChangeButton"
-    page.appendChild(newButton);
+    colorSelector.appendChild(newButton);
   }
 }
