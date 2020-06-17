@@ -86,7 +86,10 @@ removeButton.onclick = function() {
 
     getExtensionColor().then( currentColor => {
       const isInMenu = colorOptions.includes(currentColor);
-      if(!isInMenu) setExtensionColor(crunchyrollOrange);
+      if(!isInMenu) {
+        setExtensionColor(crunchyrollOrange);
+        updateExtensionColor(crunchyrollOrange);
+      }
     });
 
     setColorMenu(colorOptions);
