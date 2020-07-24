@@ -1,5 +1,7 @@
 'use strict';
-const tabsInfo = {}
+const tabsInfo = {};
+const skipIntro = true;
+const skipIntroSocket = io('https://roll-together-intro-skip.herokuapp.com');
 
 loadStyles();
 
@@ -86,6 +88,11 @@ chrome.runtime.onConnectExternal.addListener(port => {
       }
     }
   );
+
+  if (skipIntro) {
+    log('Sending skip intro marks request.', { url: port.sender.tab.url })
+    skipIntroSocket.emit('skip-marks', port.sender.tab.url)
+  }
 });
 
 function sendUpdateToWebpage(tabId, roomState, roomProgress) {
@@ -211,6 +218,24 @@ function loadStyles() {
   link.media = 'all';
   head.appendChild(link);
 }
+
+skipIntroSocket.on('skip-marks', ({ url, marks, error }) => {
+  log('Receiving skip intro marks response', { url, marks, error })
+  if (error) {
+    return;
+  }
+
+  chrome.tabs.query({ url }, function (tabs) {
+    tabs.forEach(tab => {
+      const tabInfo = tabsInfo[tab.id]
+      if (!tabInfo || !tabInfo.webPageConnection) {
+        return
+      }
+
+      tabInfo.webPageConnection.postMessage({ type: BackgroundMessageTypes.SKIP_MARKS, marks });
+    })
+  })
+})
 
 window.updatePopup = null;
 window.createRoom = sendConnectionRequestToWebpage;
