@@ -1,48 +1,44 @@
 'use strict';
-
-window.updatePopup = null;
-
-let webPageConnection = null;
-let socket = null;
-let roomId = null;
-let skipIntro = true;
+const tabsInfo = {}
 
 loadStyles();
 
-chrome.tabs.onActivated.addListener(({tabId}) => {
-  getExtensionColor().then(color => setIconColor(tabId, color ))
-  getIntroFeatureState().then(state => skipIntro = state);
-});
-
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  getIntroFeatureState().then(state => skipIntro = state);
-  console.log({ skipIntro });
-  getExtensionColor().then(color => setIconColor(tabId, color ));
-
-  if (roomId != null) return;
-  if (!tab.url.startsWith('https://www.crunchyroll.com/')) return;
-
-  const urlRoomId = getParameterByName(tab.url);
-  log('Updated tab', { tab, urlRoomId });
-  if (urlRoomId == null) return;
-
-  sendConnectionRequestToWebpage(tab);
+const regex = /http.*:\/\/www\.crunchyroll.*\/[^\/]+\/episode.*/;
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  getExtensionColor().then(color => setIconColor(tabId, color));
 });
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
     chrome.declarativeContent.onPageChanged.addRules([{
       conditions: [new chrome.declarativeContent.PageStateMatcher({
-        pageUrl: { hostEquals: 'www.crunchyroll.com' },
+        pageUrl: { urlMatches: 'http.*:\/\/www\.crunchyroll.*\/[^\/]+\/episode.*' },
       })],
       actions: [new chrome.declarativeContent.ShowPageAction()]
     }]);
   });
 });
 
-function tryUpdatePopup() {
-  const { updatePopup } = window;
+chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+  getExtensionColor().then(color => setIconColor(tabId, color));
 
+  if (!regex.test(tab.url)) {
+    return;
+  }
+
+  if (!tabsInfo[tabId]) {
+    tabsInfo[tabId] = { tabId }
+  }
+
+  await injectScript(tab);
+
+  const urlRoomId = getParameterByName(tab.url, 'rollTogetherRoom');
+  if (urlRoomId) {
+    sendConnectionRequestToWebpage(tab)
+  }
+});
+
+function tryUpdatePopup() {
   try {
     updatePopup && updatePopup();
   } catch {
@@ -50,34 +46,40 @@ function tryUpdatePopup() {
   }
 }
 
-function disconnectWebsocket() {
-  socket && socket.disconnect();
-  socket = null;
-  roomId = null;
+function disconnectWebsocket(tabId) {
+  const { socket } = tabsInfo[tabId]
+
+  if (socket) {
+    socket.disconnect();
+    delete tabsInfo[tabId].socket;
+    delete tabsInfo[tabId].roomId;
+  }
 
   tryUpdatePopup();
 }
 
 chrome.runtime.onConnectExternal.addListener(port => {
-  webPageConnection = port;
+  const tabId = port.sender.tab.id
+  const tabInfo = tabsInfo[tabId]
 
-  webPageConnection.onDisconnect.addListener(
+  tabInfo.webPageConnection = port
+
+  tabInfo.webPageConnection.onDisconnect.addListener(
     function () {
-      disconnectWebsocket();
-      webPageConnection = null;
-      window.updatePopup = null;
+      disconnectWebsocket(tabId);
+      delete tabsInfo[tabId]
     }
   );
 
-  webPageConnection.onMessage.addListener(
+  tabInfo.webPageConnection.onMessage.addListener(
     function ({ state, currentProgress, urlRoomId, type }) {
       log('Received webpage message', { type, state, currentProgress });
       switch (type) {
         case (WebpageMessageTypes.CONNECTION):
-          connectWebsocket(currentProgress, state, urlRoomId);
+          connectWebsocket(tabId, currentProgress, state, urlRoomId);
           break;
         case (WebpageMessageTypes.LOCAL_UPDATE):
-          socket && socket.emit('update', state, currentProgress);
+          tabInfo.socket && tabInfo.socket.emit('update', state, currentProgress);
           break;
         default:
           throw "Invalid WebpageMessageType " + type;
@@ -86,44 +88,52 @@ chrome.runtime.onConnectExternal.addListener(port => {
   );
 });
 
-function sendUpdateToWebpage(roomState, roomProgress) {
-  if (webPageConnection) {
+function sendUpdateToWebpage(tabId, roomState, roomProgress) {
+  log('Sending update to webpage', { tabId, roomState, roomProgress });
+  const tabInfo = tabsInfo[tabId];
+
+  if (tabInfo.webPageConnection) {
     const type = BackgroundMessageTypes.REMOTE_UPDATE;
-    webPageConnection.postMessage({ type, roomState, roomProgress });
+    tabInfo.webPageConnection.postMessage({ type, roomState, roomProgress });
   }
 }
 
-async function sendConnectionRequestToWebpage(tab) {
-  await injectScript(tab);
+function sendConnectionRequestToWebpage(tab) {
+  if (tabsInfo[tab.id].socket) return;
+
+  log('Sending connection request to webpage', { tab });
+  const { webPageConnection } = tabsInfo[tab.id];
 
   if (webPageConnection) {
     webPageConnection.postMessage({ type: BackgroundMessageTypes.CONNECTION });
   }
 }
 
-function connectWebsocket(videoProgress, videoState, urlRoomId) {
-  if (socket != null) return;
+function connectWebsocket(tabId, videoProgress, videoState, urlRoomId) {
+  log('Connecting websocket', { tabId, videoProgress, videoState, urlRoomId });
+  const tabInfo = tabsInfo[tabId];
+  if (tabInfo.socket != null) return;
 
   let query = `videoProgress=${Math.round(videoProgress)}&videoState=${videoState}${(urlRoomId ? `&room=${urlRoomId}` : '')}`;
 
-  socket = io('https://roll-together.herokuapp.com/', { query });
+  tabInfo.socket = io('https://roll-together.herokuapp.com/', { query });
 
-  socket.on('join', (receivedRoomId, roomState, roomProgress) => {
-    roomId = receivedRoomId;
-    log('Sucessfully joined a room', { roomId, roomState, roomProgress });
+  tabInfo.socket.on('join', (receivedRoomId, roomState, roomProgress) => {
+    tabInfo.roomId = receivedRoomId;
+    log('Sucessfully joined a room', { roomId: tabInfo.roomId, roomState, roomProgress });
     tryUpdatePopup();
 
-    sendUpdateToWebpage(roomState, roomProgress);
+    sendUpdateToWebpage(tabId, roomState, roomProgress);
   });
 
-  socket.on('update', (id, roomState, roomProgress) => {
+  tabInfo.socket.on('update', (id, roomState, roomProgress) => {
     log('Received update Message from ', id, { roomState, roomProgress });
-    sendUpdateToWebpage(roomState, roomProgress);
+    sendUpdateToWebpage(tabId, roomState, roomProgress);
   });
 }
 
 const injectScript = async (tab) => {
-  log('Injecting script...');
+  log('Trying to inject script...');
   const commonCodeResponse = await fetch('common.js');
   const commonCode = (await commonCodeResponse.text())
     .replace(/\\/g, '\\\\')
@@ -166,9 +176,9 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
     radius = 5;
   }
   if (typeof radius === 'number') {
-    radius = {tl: radius, tr: radius, br: radius, bl: radius};
+    radius = { tl: radius, tr: radius, br: radius, bl: radius };
   } else {
-    const defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+    const defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
     for (var side in defaultRadius) {
       radius[side] = radius[side] || defaultRadius[side];
     }
@@ -192,18 +202,19 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
   }
 }
 
-window.createRoom = sendConnectionRequestToWebpage;
-window.disconnectRoom = disconnectWebsocket;
-window.getRoomId = () => roomId;
-
 function loadStyles() {
-  const head  = document.getElementsByTagName('head')[0];
-  const link  = document.createElement('link');
-  link.rel  = 'stylesheet';
+  const head = document.getElementsByTagName('head')[0];
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
   link.type = 'text/css';
   link.href = 'styles.css';
   link.media = 'all';
   head.appendChild(link);
 }
+
+window.updatePopup = null;
+window.createRoom = sendConnectionRequestToWebpage;
+window.disconnectRoom = disconnectWebsocket;
+window.getRoomId = (tabId) => tabsInfo[tabId] && tabsInfo[tabId].roomId;
 
 log("Initialized");
