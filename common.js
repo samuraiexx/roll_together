@@ -22,7 +22,7 @@ const States = {
 
 const BackgroundMessageTypes = {
   REMOTE_UPDATE: 'remote_update',
-  CONNECTION: 'connection', 
+  CONNECTION: 'connection',
   SKIP_MARKS: 'skip_marks'
 }
 
