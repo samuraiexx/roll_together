@@ -16,6 +16,9 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (roomId != null) return;
   if (!tab.url.startsWith('https://www.crunchyroll.com/')) return;
 
+  //window.setInterval(testIntroFeature, 10000);
+  //log('Updated Tab Triggered: 10s from now');
+
   const urlRoomId = getParameterByName(tab.url);
   log('Updated tab', { tab, urlRoomId });
   if (urlRoomId == null) return;
@@ -51,6 +54,14 @@ function disconnectWebsocket() {
 
   tryUpdatePopup();
 }
+
+const testIntroFeature = () => {
+  if(webPageConnection) {
+    log('Called IntroFeature Requisition');
+    const type = BackgroundMessageTypes.SKIP_MARKS;
+    webPageConnection.postMessage({ type, marks: {begin: 10.0, end: 30.0 } });
+  }
+};
 
 chrome.runtime.onConnectExternal.addListener(port => {
   webPageConnection = port;

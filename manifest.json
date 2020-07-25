@@ -10,6 +10,15 @@
     ],
     "persistent": true
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.crunchyroll.com/*"
+      ], 
+      "css": ["styles.css"]
+    }
+  ], 
+
   "externally_connectable": {
     "matches": [
       "*://www.crunchyroll.com/*"
