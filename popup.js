@@ -7,7 +7,7 @@ const disconnectButton = document.getElementById('disconnect');
 const urlInput = document.getElementById('urlInput');
 let optionButtons = document.getElementsByClassName('actionButton');
 
-getExtensionColor().then( color => {
+getExtensionColor().then(color => {
   for (button of optionButtons) {
     log("Color of " + button.id + " is now " + color);
     button.style.backgroundColor = color;
