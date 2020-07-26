@@ -80,3 +80,11 @@ function getColorMenu() {
     });
   });
 }
+
+function getIntroFeatureState() {
+  return new Promise(callback => {
+    chrome.storage.sync.get({ isIntroFeatureActive: true }, function (data) {
+      callback(data.isIntroFeatureActive);
+    });
+  });
+}
