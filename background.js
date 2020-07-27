@@ -1,6 +1,6 @@
 'use strict';
 const tabsInfo = {};
-const skipIntro = true;
+let skipIntro = null;
 const skipIntroSocket = io('https://rt-skip-intro.azurewebsites.net');
 const skipIntroPendingRequests = {}
 
@@ -9,6 +9,7 @@ loadStyles();
 const regex = /http.*:\/\/www\.crunchyroll.*\/[^\/]+\/episode.*/;
 chrome.tabs.onActivated.addListener(({ tabId }) => {
   getExtensionColor().then(color => setIconColor(tabId, color));
+  getIntroFeatureState().then(state => skipIntro = state);
 });
 
 chrome.runtime.onInstalled.addListener(function () {
@@ -23,6 +24,7 @@ chrome.runtime.onInstalled.addListener(function () {
 });
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+  getIntroFeatureState().then(state => skipIntro = state);
   getExtensionColor().then(color => setIconColor(tabId, color));
 
   if (!regex.test(tab.url)) {

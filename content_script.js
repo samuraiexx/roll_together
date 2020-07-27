@@ -41,9 +41,9 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
     }
 
    const getSkipButtonState = (currentProgress) => {
-      if(!beginIntro) return skipButtonStates.HIDDEN;
+      if(beginIntro === null) return skipButtonStates.HIDDEN;
 
-      let endConstantStateTime = Math.min(endIntro, beginIntro + 5);
+      const endConstantStateTime = Math.min(endIntro, beginIntro + 5);
 
       if(currentProgress >= beginIntro && currentProgress <= endConstantStateTime) {
         return skipButtonStates.CONSTANT;
@@ -77,9 +77,9 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
     }
 
     const createSkipButton = () => {
-      const root = document.getElementById("showmedia_video_player");
+      const videoContainer = document.getElementById("showmedia_video_player");
   
-      if(root) {
+      if(videoContainer) {
         console.log("Creating skip button...");
   
         if(document.getElementById("skipButton") == null) {
