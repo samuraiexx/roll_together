@@ -8,9 +8,9 @@ const skipIntroCheckBox = document.getElementById("skipIntroCheckbox");
 const spanIntroCheckBox = document.getElementById("spanIntroCheckBox");
 let extensionColor = null;
 
+getIntroFeatureState().then(state => skipIntroCheckBox.checked = state);
 getExtensionColor().then(color => updateExtensionColor(color));
 getColorMenu().then(colorOptions => buildButtons(colorOptions));
-getIntroFeatureState().then(state => skipIntroCheckBox.checked = state);
 
 function setCheckBoxColor() {
   if(skipIntroCheckBox.checked) {
