@@ -1,6 +1,6 @@
 {
   "name": "Roll Together",
-  "version": "1.0",
+  "version": "2.0",
   "description": "It's an extension that lets you and a friend synchronize your anime so you can watch together =]",
   "background": {
     "scripts": [
@@ -14,11 +14,12 @@
     {
       "matches": [
         "*://www.crunchyroll.com/*"
-      ], 
-      "css": ["styles.css"]
+      ],
+      "css": [
+        "styles.css"
+      ]
     }
-  ], 
-
+  ],
   "externally_connectable": {
     "matches": [
       "*://www.crunchyroll.com/*"
