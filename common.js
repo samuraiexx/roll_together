@@ -4,6 +4,7 @@ const LIMIT_DELTA_TIME = 3; // In Seconds
 const googleGreen = "#009688";
 const googleAquaBlue = "#00BBD3";
 const crunchyrollOrange = "#F78C25";
+const chineseSilver = "#CCC";
 const defaultcolorOptions = [googleGreen, googleAquaBlue, crunchyrollOrange];
 
 const Actions = {

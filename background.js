@@ -5,19 +5,22 @@ window.updatePopup = null;
 let webPageConnection = null;
 let socket = null;
 let roomId = null;
+let skipIntro = true;
 
 loadStyles();
 
-chrome.tabs.onActivated.addListener(({tabId}) => getExtensionColor().then(color => setIconColor(tabId, color )));
+chrome.tabs.onActivated.addListener(({tabId}) => {
+  getExtensionColor().then(color => setIconColor(tabId, color ))
+  getIntroFeatureState().then(state => skipIntro = state);
+});
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  getIntroFeatureState().then(state => skipIntro = state);
+  console.log({ skipIntro });
   getExtensionColor().then(color => setIconColor(tabId, color ));
 
   if (roomId != null) return;
   if (!tab.url.startsWith('https://www.crunchyroll.com/')) return;
-
-  //window.setInterval(testIntroFeature, 10000);
-  //log('Updated Tab Triggered: 10s from now');
 
   const urlRoomId = getParameterByName(tab.url);
   log('Updated tab', { tab, urlRoomId });
@@ -54,14 +57,6 @@ function disconnectWebsocket() {
 
   tryUpdatePopup();
 }
-
-const testIntroFeature = () => {
-  if(webPageConnection) {
-    log('Called IntroFeature Requisition');
-    const type = BackgroundMessageTypes.SKIP_MARKS;
-    webPageConnection.postMessage({ type, marks: {begin: 10.0, end: 30.0 } });
-  }
-};
 
 chrome.runtime.onConnectExternal.addListener(port => {
   webPageConnection = port;
