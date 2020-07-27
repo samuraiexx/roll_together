@@ -84,7 +84,7 @@ function getColorMenu() {
 
 function getIntroFeatureState() {
   return new Promise(callback => {
-    chrome.storage.sync.get({ isIntroFeatureActive: true }, function (data) {
+    chrome.storage.sync.get({ isIntroFeatureActive: false }, function (data) {
       callback(data.isIntroFeatureActive);
     });
   });
