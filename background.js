@@ -1,7 +1,8 @@
 'use strict';
 const tabsInfo = {};
 const skipIntro = true;
-const skipIntroSocket = io('https://roll-together-intro-skip.herokuapp.com');
+const skipIntroSocket = io('https://rt-skip-intro.azurewebsites.net');
+const skipIntroPendingRequests = {}
 
 loadStyles();
 
@@ -90,8 +91,10 @@ chrome.runtime.onConnectExternal.addListener(port => {
   );
 
   if (skipIntro) {
-    log('Sending skip intro marks request.', { url: port.sender.tab.url })
-    skipIntroSocket.emit('skip-marks', port.sender.tab.url)
+    const url = port.sender.tab.url;
+    log('Sending skip intro marks request.', { url })
+    skipIntroSocket.emit('skip-marks', url)
+    skipIntroPendingRequests[url] = true;
   }
 });
 
@@ -221,20 +224,33 @@ function loadStyles() {
 
 skipIntroSocket.on('skip-marks', ({ url, marks, error }) => {
   log('Receiving skip intro marks response', { url, marks, error })
+  delete skipIntroPendingRequests[url];
   if (error) {
     return;
   }
 
   chrome.tabs.query({ url }, function (tabs) {
-    tabs.forEach(tab => {
-      const tabInfo = tabsInfo[tab.id]
-      if (!tabInfo || !tabInfo.webPageConnection) {
-        return
-      }
 
-      tabInfo.webPageConnection.postMessage({ type: BackgroundMessageTypes.SKIP_MARKS, marks });
+    tabs.forEach(tab => {
+      try {
+        const tabInfo = tabsInfo[tab.id];
+        if (!tabInfo || !tabInfo.webPageConnection) {
+          return;
+        }
+
+        tabInfo.webPageConnection.postMessage({ type: BackgroundMessageTypes.SKIP_MARKS, marks });
+      } catch (e) {
+        console.error(e);
+      }
     })
   })
+})
+
+skipIntroSocket.on('reconnect', () => {
+  log('Reconnected')
+  for (const url in skipIntroPendingRequests) {
+    skipIntroSocket.emit('skip-marks', url)
+  }
 })
 
 window.updatePopup = null;
