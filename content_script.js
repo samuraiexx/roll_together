@@ -8,8 +8,6 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
 
     let skipButton = null;
     let currentSkipButtonState = null;
-    
-    let isIntroFeatureActive = true;
 
     const skipButtonStates = {
       CONSTANT: 'constant', 
@@ -43,11 +41,9 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
     }
 
    const getSkipButtonState = (currentProgress) => {
-      if(!isIntroFeatureActive || !beginIntro) return skipButtonStates.HIDDEN;
+      if(!beginIntro) return skipButtonStates.HIDDEN;
 
       let endConstantStateTime = Math.min(endIntro, beginIntro + 5);
-
-      console.log({beginIntro, endIntro, endConstantStateTime, currentProgress});
 
       if(currentProgress >= beginIntro && currentProgress <= endConstantStateTime) {
         return skipButtonStates.CONSTANT;
@@ -128,7 +124,6 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
           rollTogetherExtension.postMessage({ type, state, currentProgress });
           break;
         case Actions.TIMEUPDATE:
-          console.log(currentSkipButtonState);
           setSkipButtonState(currentProgress);
           timeJump && rollTogetherExtension.postMessage({ type, state, currentProgress });
           break;
@@ -188,7 +183,6 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
         case BackgroundMessageTypes.SKIP_MARKS:
           const { marks } = args;
           const { begin, end } = marks;
-          console.log("Intro info received");
           beginIntro = begin;
           endIntro = end;
           break;
