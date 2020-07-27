@@ -80,7 +80,7 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
       const videoContainer = document.getElementById("showmedia_video_player");
   
       if(videoContainer) {
-        console.log("Creating skip button...");
+        log("Creating skip button...");
   
         if(document.getElementById("skipButton") == null) {
           skipButton = document.createElement("button");
@@ -100,7 +100,7 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
 
           skipButton.onclick = () => triggerAction(Actions.TIMEUPDATE, endIntro);          
 
-          root.appendChild(skipButton);
+          videoContainer.appendChild(skipButton);
           setSkipButtonState();
         }
       }
