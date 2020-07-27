@@ -130,6 +130,7 @@ button {
 }
 
 .optionButton {
+  transition: .4s;
   display: flex;
   height: 41px;
   width: auto;
