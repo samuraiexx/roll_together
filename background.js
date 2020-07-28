@@ -232,7 +232,6 @@ skipIntroSocket.on('skip-marks', ({ url, marks, error }) => {
   }
 
   chrome.tabs.query({ url }, function (tabs) {
-
     tabs.forEach(tab => {
       try {
         const tabInfo = tabsInfo[tab.id];
