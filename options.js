@@ -4,11 +4,36 @@ let removeButton = document.getElementById("removeButton");
 const input = document.getElementById("colorInput");
 const confirmationMessage = document.getElementById("confirmationMessage");
 const maxMenuSize = 10;
+const skipIntroCheckBox = document.getElementById("skipIntroCheckbox");
+const spanIntroCheckBox = document.getElementById("spanIntroCheckBox");
+let extensionColor = null;
 
+getIntroFeatureState().then(state => skipIntroCheckBox.checked = state);
 getExtensionColor().then(color => updateExtensionColor(color));
 getColorMenu().then(colorOptions => buildButtons(colorOptions));
 
+function setCheckBoxColor() {
+  if(skipIntroCheckBox.checked) {
+    spanIntroCheckBox.style.backgroundColor = extensionColor;
+  } else {
+    spanIntroCheckBox.style.backgroundColor = chineseSilver;
+  }
+}
+
+skipIntroCheckBox.onclick = () => {
+  setCheckBoxColor();
+  setIntroFeatureState(skipIntroCheckBox.checked);
+}
+
+function setIntroFeatureState(state) {
+  chrome.storage.sync.set({ isIntroFeatureActive: state }, function () {
+    log("Setting intro feature state to " + state);
+  });
+}
+
 function updateExtensionColor(color) {
+  extensionColor = color;
+  setCheckBoxColor();
   input.value = color;
   addButton.style.backgroundColor = color;
   removeButton.style.backgroundColor = color;
@@ -35,7 +60,7 @@ function colorCodeValidation(color) {
 addButton.onclick = function() {
   const color = input.value.toUpperCase();
 
-  getColorMenu().then( colorOptions => {
+  getColorMenu().then(colorOptions => {
     if(colorOptions.length === maxMenuSize) {
       confirmationMessage.innerText = "You have reached the maximum menu size!";
       log("Max menu size reached");

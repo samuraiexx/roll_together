@@ -1,11 +1,20 @@
 if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
-  rollTogetherScript = () => {
+  function rollTogetherScript() {
     const ignoreNext = {};
+
+    let rollTogetherExtension = null
     let lastFrameProgress = null;
 
-    const rollTogetherExtension = chrome
-      .runtime
-      .connect('ihablaljfnaebapdcgnomolaijpmhkff', { name: 'rollTogether' });
+    let beginIntro = null;
+    let endIntro = null;
+    let skipButton = null;
+    let currentSkipButtonState = null;
+
+    const skipButtonStates = {
+      CONSTANT: 'constant',
+      HOVER: 'hover',
+      HIDDEN: 'hidden'
+    };
 
     async function getState(stateName) {
       const func = VILOS_PLAYERJS[stateName].bind(VILOS_PLAYERJS);
@@ -28,6 +37,72 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
       return { state, currentProgress, timeJump };
     }
 
+    function getSkipButtonState(currentProgress) {
+      if (beginIntro === null) return skipButtonStates.HIDDEN;
+
+      const endConstantStateTime = Math.min(endIntro, beginIntro + 5);
+
+      if (currentProgress >= beginIntro && currentProgress <= endConstantStateTime) {
+        return skipButtonStates.CONSTANT;
+      }
+
+      if (currentProgress > endConstantStateTime && currentProgress <= endIntro) {
+        return skipButtonStates.HOVER;
+      }
+
+      return skipButtonStates.HIDDEN;
+    }
+
+    function setSkipButtonState(currentProgress) {
+      let state = getSkipButtonState(currentProgress);
+
+      if (state === currentSkipButtonState) return;
+
+      currentSkipButtonState = state;
+
+      if (state === skipButtonStates.CONSTANT) {
+        skipButton.style.opacity = 1;
+      } else {
+        skipButton.style.opacity = 0;
+      }
+
+      if (state === skipButtonStates.HIDDEN) {
+        skipButton.style.display = 'none';
+      } else {
+        skipButton.style.display = 'block';
+      }
+    }
+
+    function createSkipButton() {
+      const videoContainer = document.getElementById("showmedia_video_player");
+
+      if (videoContainer) {
+        log("Creating skip button...");
+
+        if (document.getElementById("skipButton") == null) {
+          skipButton = document.createElement("button");
+
+          skipButton.id = "skipButton";
+          skipButton.innerText = "Skip Intro";
+
+          skipButton.onmouseout = () => {
+            if (currentSkipButtonState === skipButtonStates.CONSTANT) {
+              skipButton.style.opacity = 1;
+            } else {
+              skipButton.style.opacity = 0;
+            }
+          };
+
+          skipButton.onmouseover = () => skipButton.style.opacity = 1;
+
+          skipButton.onclick = () => triggerAction(Actions.TIMEUPDATE, endIntro);
+
+          videoContainer.appendChild(skipButton);
+          setSkipButtonState();
+        }
+      }
+    }
+
     const handleLocalAction = action => async () => {
       if (ignoreNext[action] === true) {
         ignoreNext[action] = false;
@@ -44,12 +119,13 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
           rollTogetherExtension.postMessage({ type, state, currentProgress });
           break;
         case Actions.TIMEUPDATE:
+          setSkipButtonState(currentProgress);
           timeJump && rollTogetherExtension.postMessage({ type, state, currentProgress });
           break;
       }
     }
 
-    const triggerAction = (action, progress) => {
+    function triggerAction(action, progress) {
       ignoreNext[action] = true;
 
       switch (action) {
@@ -68,7 +144,7 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
       }
     }
 
-    const sendConnectionMessage = async () => {
+    async function sendConnectionMessage() {
       const { state, currentProgress } = await getStates();
       const urlRoomId = getParameterByName(window.location.href);
       const type = WebpageMessageTypes.CONNECTION;
@@ -90,7 +166,7 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
       }
     }
 
-    const handleBackgroundMessage = async (args) => {
+    async function handleBackgroundMessage(args) {
       const { type } = args;
       switch (type) {
         case BackgroundMessageTypes.CONNECTION:
@@ -99,16 +175,36 @@ if (document.getElementById('ROLL_TOGETHER_SCRIPT') == null) {
         case BackgroundMessageTypes.REMOTE_UPDATE:
           handleRemoteUpdate(args);
           break;
+        case BackgroundMessageTypes.SKIP_MARKS:
+          const { marks: { begin, end } } = args;
+          beginIntro = begin;
+          endIntro = end;
+          break;
         default:
           throw "Invalid BackgroundMessageType: " + type;
       }
     }
 
-    Object.values(Actions).forEach(
-      action => VILOS_PLAYERJS.on(action, handleLocalAction(action))
-    );
+    function runContentScript() {
+      if (!window.VILOS_PLAYERJS) {
+        setTimeout(runContentScript, 500);
+        return;
+      }
 
-    rollTogetherExtension.onMessage.addListener(handleBackgroundMessage);
+      Object.values(Actions).forEach(
+        action => {
+          VILOS_PLAYERJS.on(action, handleLocalAction(action))
+        }
+      );
+      createSkipButton();
+
+      rollTogetherExtension = chrome
+        .runtime
+        .connect('ihablaljfnaebapdcgnomolaijpmhkff', { name: 'rollTogether' });
+      rollTogetherExtension.onMessage.addListener(handleBackgroundMessage);
+    }
+
+    runContentScript();
   };
 
   var commonScript = document.createElement("script");

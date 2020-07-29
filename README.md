@@ -13,11 +13,13 @@ You can download it from Chrome Store using the following link [https://chrome.g
 
 Instructions from https://developer.chrome.com/extensions/getstarted
 ## TODO
-- [ ] Create a Website
-- [ ] Improve structure to allow more than one tab at the same time
-- [ ] Work with autoplay
-- [ ] Improve Logo/Name
 - [x] Customizable Palette
+- [x] Improve Logo/Name
+- [x] Improve structure to allow more than one tab at the same time
+- [x] Skip Intro Feature
+- [ ] Firefox Browser Support
+- [ ] Work with autoplay
+- [ ] Create a Website
 
 ## Related Repos
 Backend repo: https://github.com/samuraiexx/roll_together_backend

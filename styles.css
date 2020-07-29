@@ -24,6 +24,53 @@ body.optionsBody {
   justify-content: center;
 }
 
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 30px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 23px;
+  width: 23px;
+  right: 23px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider:before {
+  transform: translateX(19px);
+}
+
+.slider.round {
+  border-radius: 40px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
 .optionsContainer {
   display: flex;
   flex-direction: column;
@@ -31,7 +78,7 @@ body.optionsBody {
   text-align: center;
   background-color: #FEFEFE;
   width: 500px;
-  height: 320px;
+  height: 410px;
   border-radius: 10px;
 }
 
@@ -83,6 +130,7 @@ button {
 }
 
 .optionButton {
+  transition: .4s;
   display: flex;
   height: 41px;
   width: auto;
@@ -103,6 +151,15 @@ input {
   font-weight: bold;
   border: 1px solid #333;
   border-radius: 4px;
+}
+
+#skipButton {
+  bottom: 80px;
+  position: absolute;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid white;
+  transition: opacity 0.5s;
 }
 
 #colorSelector > * {

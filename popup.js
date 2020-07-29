@@ -7,7 +7,7 @@ const disconnectButton = document.getElementById('disconnect');
 const urlInput = document.getElementById('urlInput');
 let optionButtons = document.getElementsByClassName('actionButton');
 
-getExtensionColor().then( color => {
+getExtensionColor().then(color => {
   for (button of optionButtons) {
     log("Color of " + button.id + " is now " + color);
     button.style.backgroundColor = color;
@@ -21,28 +21,27 @@ function executeScript(tabId, obj) {
 }
 
 function update() {
-  const roomId = background.window.getRoomId();
-  const connected = roomId != null;
-  log('Updating Popup...', { roomId, connected });
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    const tab = tabs[0];
+    const roomId = background.window.getRoomId(tab.id);
+    const connected = roomId != null;
 
-  if (connected) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      const roomId = background.window.getRoomId();
-      const url = updateQueryStringParameter(tabs[0].url, 'rollTogetherRoom', roomId)
+    log('Updating Popup...', { roomId, connected });
+
+    if (connected) {
+      const url = updateQueryStringParameter(tab.url, 'rollTogetherRoom', roomId)
       urlInput.value = url;
       urlInput.focus();
       urlInput.select();
-    });
 
-    [...document.getElementsByClassName('firstPage')].forEach(el => el.style.display = 'none');
-    [...document.getElementsByClassName('secondPage')].forEach(el => el.style = {});
-  } else {
-    [...document.getElementsByClassName('firstPage')].forEach(el => el.style = {});
-    [...document.getElementsByClassName('secondPage')].forEach(el => el.style.display = 'none');
-  }
+      [...document.getElementsByClassName('firstPage')].forEach(el => el.style.display = 'none');
+      [...document.getElementsByClassName('secondPage')].forEach(el => el.style = {});
+    } else {
+      [...document.getElementsByClassName('firstPage')].forEach(el => el.style = {});
+      [...document.getElementsByClassName('secondPage')].forEach(el => el.style.display = 'none');
+    }
+  });
 }
-background.window.updatePopup = update;
-update();
 
 window.addEventListener('beforeunload', () => {
   background.window.updatePopup = null;
@@ -50,7 +49,7 @@ window.addEventListener('beforeunload', () => {
 
 createRoomButton.onclick = async function () {
   log('Clicking CreateRoomButton');
-  chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     background.window.createRoom(tabs[0]);
   });
 };
@@ -64,8 +63,14 @@ copyUrlButton.onclick = function () {
 
 disconnectButton.onclick = function () {
   log('Clicking DisconnectButton');
-  background.window.disconnectRoom();
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    background.window.disconnectRoom(tabs[0].id);
+  })
 }
 
 urlInput.onclick = function () {
 }
+
+background.window.updatePopup = update;
+
+update();

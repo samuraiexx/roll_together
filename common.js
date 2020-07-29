@@ -4,6 +4,7 @@ const LIMIT_DELTA_TIME = 3; // In Seconds
 const googleGreen = "#009688";
 const googleAquaBlue = "#00BBD3";
 const crunchyrollOrange = "#F78C25";
+const chineseSilver = "#CCC";
 const defaultcolorOptions = [googleGreen, googleAquaBlue, crunchyrollOrange];
 
 const Actions = {
@@ -21,7 +22,8 @@ const States = {
 
 const BackgroundMessageTypes = {
   REMOTE_UPDATE: 'remote_update',
-  CONNECTION: 'connection'
+  CONNECTION: 'connection',
+  SKIP_MARKS: 'skip_marks'
 }
 
 const WebpageMessageTypes = {
@@ -76,6 +78,14 @@ function getColorMenu() {
   return new Promise(callback => {
     chrome.storage.sync.get({ colorOptions: defaultcolorOptions }, function (data) {
       callback(data.colorOptions);
+    });
+  });
+}
+
+function getIntroFeatureState() {
+  return new Promise(callback => {
+    chrome.storage.sync.get({ isIntroFeatureActive: false }, function (data) {
+      callback(data.isIntroFeatureActive);
     });
   });
 }
