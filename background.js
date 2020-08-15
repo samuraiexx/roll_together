@@ -1,15 +1,14 @@
 'use strict';
+
 const tabsInfo = {};
-let skipIntro = null;
 const skipIntroSocket = io('https://rt-skip-intro.azurewebsites.net');
-const skipIntroPendingRequests = {}
+const skipIntroPendingRequests = {};
 
 loadStyles();
 
 const regex = /http.*:\/\/www\.crunchyroll.*\/[^\/]+\/episode.*/;
 chrome.tabs.onActivated.addListener(({ tabId }) => {
   getExtensionColor().then(color => setIconColor(tabId, color));
-  getIntroFeatureState().then(state => skipIntro = state);
 });
 
 chrome.runtime.onInstalled.addListener(function () {
@@ -24,24 +23,33 @@ chrome.runtime.onInstalled.addListener(function () {
 });
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-  getIntroFeatureState().then(state => skipIntro = state);
   getExtensionColor().then(color => setIconColor(tabId, color));
+});
 
-  if (!regex.test(tab.url)) {
-    return;
-  }
+chrome.tabs.onRemoved.addListener(function (tabId) {
+  disconnectWebsocket(tabId);
+  delete tabsInfo[tabId];
+});
+
+async function handleWebpageConnection(tab, url) {
+  const tabId = tab.id;
 
   if (!tabsInfo[tabId]) {
-    tabsInfo[tabId] = { tabId }
+    tabsInfo[tabId] = { tabId };
   }
 
-  await injectScript(tab);
-
-  const urlRoomId = getParameterByName(tab.url, 'rollTogetherRoom');
+  const urlRoomId = getParameterByName(url, 'rollTogetherRoom');
   if (urlRoomId) {
-    sendConnectionRequestToWebpage(tab)
+    sendConnectionRequestToWebpage(tab);
   }
-});
+
+  const skipIntro = await getIntroFeatureState();
+  if (skipIntro) {
+    log('Sending skip intro marks request.', { url });
+    skipIntroSocket.emit('skip-marks', url);
+    skipIntroPendingRequests[url] = true;
+  }
+}
 
 function tryUpdatePopup() {
   try {
@@ -63,68 +71,57 @@ function disconnectWebsocket(tabId) {
   tryUpdatePopup();
 }
 
-chrome.runtime.onConnectExternal.addListener(port => {
-  const tabId = port.sender.tab.id
-  const tabInfo = tabsInfo[tabId]
+chrome.runtime.onMessage.addListener(
+  function ({ state, currentProgress, type }, sender) {
+    const tabId = sender.tab.id;
+    const tabInfo = tabsInfo[tabId];
+    const url = sender.tab.url;
+    const urlRoomId = getParameterByName(url);
 
-  tabInfo.webPageConnection = port
-
-  tabInfo.webPageConnection.onDisconnect.addListener(
-    function () {
-      disconnectWebsocket(tabId);
-      delete tabsInfo[tabId]
+    log('Received webpage message', { type, state, currentProgress, url, sender });
+    switch (type) {
+      case WebpageMessageTypes.CONNECTION:
+        handleWebpageConnection(sender.tab, url)
+        break;
+      case WebpageMessageTypes.ROOM_CONNECTION:
+        connectWebsocket(tabId, currentProgress, state, urlRoomId);
+        break;
+      case (WebpageMessageTypes.LOCAL_UPDATE):
+        tabInfo.socket && tabInfo.socket.emit('update', state, currentProgress);
+        break;
+      default:
+        throw "Invalid WebpageMessageType " + type;
     }
-  );
-
-  tabInfo.webPageConnection.onMessage.addListener(
-    function ({ state, currentProgress, urlRoomId, type }) {
-      log('Received webpage message', { type, state, currentProgress });
-      switch (type) {
-        case (WebpageMessageTypes.CONNECTION):
-          connectWebsocket(tabId, currentProgress, state, urlRoomId);
-          break;
-        case (WebpageMessageTypes.LOCAL_UPDATE):
-          tabInfo.socket && tabInfo.socket.emit('update', state, currentProgress);
-          break;
-        default:
-          throw "Invalid WebpageMessageType " + type;
-      }
-    }
-  );
-
-  if (skipIntro) {
-    const url = port.sender.tab.url;
-    log('Sending skip intro marks request.', { url })
-    skipIntroSocket.emit('skip-marks', url)
-    skipIntroPendingRequests[url] = true;
   }
-});
+);
 
 function sendUpdateToWebpage(tabId, roomState, roomProgress) {
   log('Sending update to webpage', { tabId, roomState, roomProgress });
   const tabInfo = tabsInfo[tabId];
 
-  if (tabInfo.webPageConnection) {
-    const type = BackgroundMessageTypes.REMOTE_UPDATE;
-    tabInfo.webPageConnection.postMessage({ type, roomState, roomProgress });
-  }
+  const type = BackgroundMessageTypes.REMOTE_UPDATE;
+  chrome.tabs.sendMessage(tabId, { type, roomState, roomProgress });
 }
 
 function sendConnectionRequestToWebpage(tab) {
-  if (tabsInfo[tab.id].socket) return;
+  const tabId = tab.id;
+  const tabInfo = tabsInfo[tabId];
+
+  if (tabInfo.socket != null) {
+    if (getParameterByName(tab.url, 'rollTogetherRoom') === tabsInfo.roomId) {
+      return;
+    }
+    disconnectWebsocket(tabId);
+  }
 
   log('Sending connection request to webpage', { tab });
-  const { webPageConnection } = tabsInfo[tab.id];
 
-  if (webPageConnection) {
-    webPageConnection.postMessage({ type: BackgroundMessageTypes.CONNECTION });
-  }
+  chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.ROOM_CONNECTION });
 }
 
 function connectWebsocket(tabId, videoProgress, videoState, urlRoomId) {
   log('Connecting websocket', { tabId, videoProgress, videoState, urlRoomId });
   const tabInfo = tabsInfo[tabId];
-  if (tabInfo.socket != null) return;
 
   let query = `videoProgress=${Math.round(videoProgress)}&videoState=${videoState}${(urlRoomId ? `&room=${urlRoomId}` : '')}`;
 
@@ -142,20 +139,6 @@ function connectWebsocket(tabId, videoProgress, videoState, urlRoomId) {
     log('Received update Message from ', id, { roomState, roomProgress });
     sendUpdateToWebpage(tabId, roomState, roomProgress);
   });
-}
-
-const injectScript = async (tab) => {
-  log('Trying to inject script...');
-  const commonCodeResponse = await fetch('common.js');
-  const commonCode = (await commonCodeResponse.text())
-    .replace(/\\/g, '\\\\')
-    .replace(/\`/g, '\\\`');
-
-  await executeScript(
-    tab.id,
-    { code: `commonCode = \`${commonCode}\`;` }
-  );
-  await executeScript(tab.id, { file: 'content_script.js' });
 }
 
 function setIconColor(tabId, color) {
@@ -234,12 +217,7 @@ skipIntroSocket.on('skip-marks', ({ url, marks, error }) => {
   chrome.tabs.query({ url }, function (tabs) {
     tabs.forEach(tab => {
       try {
-        const tabInfo = tabsInfo[tab.id];
-        if (!tabInfo || !tabInfo.webPageConnection) {
-          return;
-        }
-
-        tabInfo.webPageConnection.postMessage({ type: BackgroundMessageTypes.SKIP_MARKS, marks });
+        chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.SKIP_MARKS, marks });
       } catch (e) {
         console.error(e);
       }
