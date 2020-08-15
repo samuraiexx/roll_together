@@ -60,6 +60,9 @@ function tryUpdatePopup() {
 }
 
 function disconnectWebsocket(tabId) {
+  if (!tabsInfo[tabId]) {
+    return;
+  }
   const { socket } = tabsInfo[tabId]
 
   if (socket) {
