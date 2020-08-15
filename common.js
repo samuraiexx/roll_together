@@ -1,5 +1,6 @@
 const DEBUG = true;
 const DISPLAY_DEBUG_TIME = false;
+
 const LIMIT_DELTA_TIME = 3; // In Seconds
 const googleGreen = "#009688";
 const googleAquaBlue = "#00BBD3";
@@ -22,12 +23,13 @@ const States = {
 
 const BackgroundMessageTypes = {
   REMOTE_UPDATE: 'remote_update',
-  CONNECTION: 'connection',
+  ROOM_CONNECTION: 'room_connection',
   SKIP_MARKS: 'skip_marks'
 }
 
 const WebpageMessageTypes = {
   LOCAL_UPDATE: 'local_update',
+  ROOM_CONNECTION: 'room_connection',
   CONNECTION: 'connection',
 }
 

@@ -4,27 +4,27 @@
   "description": "It's an extension that lets you and a friend synchronize your anime so you can watch together =]",
   "background": {
     "scripts": [
-      "common.js",
       "socket.io.js",
+      "common.js",
       "background.js"
     ],
     "persistent": true
   },
   "content_scripts": [
     {
+      "all_frames": true,
       "matches": [
-        "*://www.crunchyroll.com/*"
+        "*://static.crunchyroll.com/*"
       ],
       "css": [
         "styles.css"
+      ],
+      "js": [
+        "common.js",
+        "content_script.js"
       ]
     }
   ],
-  "externally_connectable": {
-    "matches": [
-      "*://www.crunchyroll.com/*"
-    ]
-  },
   "content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
   "permissions": [
     "storage",
@@ -32,6 +32,7 @@
     "activeTab",
     "declarativeContent",
     "*://www.crunchyroll.com/*",
+    "*://static.crunchyroll.com/*",
     "*://rt-skip-intro.azurewebsites.net/*"
   ],
   "page_action": {
