@@ -127,7 +127,7 @@ function triggerAction(action, progress) {
   switch (action) {
     case Actions.PAUSE:
       player.pause();
-      player.currenttime = progress;
+      player.currentTime = progress;
       break;
     case Actions.PLAY:
       player.play();
