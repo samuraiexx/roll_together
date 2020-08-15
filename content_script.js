@@ -18,11 +18,11 @@ function getState(stateName) {
   return player[stateName];
 }
 
-async function getStates() {
-  const [paused, currentProgress] = await Promise.all([
+function getStates() {
+  const [paused, currentProgress] = [
     getState("paused"),
     getState("currentTime"),
-  ]);
+  ];
 
   lastFrameProgress = lastFrameProgress || currentProgress;
 
@@ -99,13 +99,13 @@ function createSkipButton() {
   }
 }
 
-const handleLocalAction = action => async () => {
+const handleLocalAction = action => () => {
   if (ignoreNext[action] === true) {
     ignoreNext[action] = false;
     return;
   }
 
-  const { state, currentProgress, timeJump } = await getStates();
+  const { state, currentProgress, timeJump } = getStates();
   const type = WebpageMessageTypes.LOCAL_UPDATE;
 
   log('Local Action', action, { type, state, currentProgress });
@@ -140,17 +140,17 @@ function triggerAction(action, progress) {
   }
 }
 
-async function sendRoomConnectionMessage() {
-  const { state, currentProgress } = await getStates();
+function sendRoomConnectionMessage() {
+  const { state, currentProgress } = getStates();
   const type = WebpageMessageTypes.ROOM_CONNECTION;
   chrome.runtime.sendMessage(
     { state, currentProgress, type }
   );
 }
 
-async function handleRemoteUpdate({ roomState, roomProgress }) {
+function handleRemoteUpdate({ roomState, roomProgress }) {
   log('Handling Remote Update', { roomState, roomProgress });
-  const { state, currentProgress } = await getStates();
+  const { state, currentProgress } = getStates();
   if (state !== roomState) {
     if (roomState === States.PAUSED) triggerAction(Actions.PAUSE, roomProgress);
     if (roomState === States.PLAYING) triggerAction(Actions.PLAY, roomProgress);
@@ -161,7 +161,7 @@ async function handleRemoteUpdate({ roomState, roomProgress }) {
   }
 }
 
-async function handleBackgroundMessage(args) {
+function handleBackgroundMessage(args) {
   log("Received message from Background", args);
 
   const { type } = args;
