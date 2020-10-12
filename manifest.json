@@ -30,7 +30,6 @@
     "storage",
     "tabs",
     "activeTab",
-    "declarativeContent",
     "*://www.crunchyroll.com/*",
     "*://static.crunchyroll.com/*",
     "*://rt-skip-intro.azurewebsites.net/*"
