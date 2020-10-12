@@ -15,23 +15,10 @@ const regex = /http.*:\/\/www\.crunchyroll.*\/[^\/]+\/episode.*/;
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if(changeInfo.status === 'complete' && tab.url.match(regex)) {
     chrome.pageAction.show(tabId);
-  } else {
+  } else if(changeInfo.status === 'complete') {
     chrome.pageAction.hide(tabId);
   }
 });
-
-/*
-chrome.runtime.onInstalled.addListener(function () {
-  chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
-    chrome.declarativeContent.onPageChanged.addRules([{
-      conditions: [new chrome.declarativeContent.PageStateMatcher({
-        pageUrl: { urlMatches: regex },
-      })],
-      actions: [new chrome.declarativeContent.ShowPageAction()]
-    }]);
-  });
-});
-*/
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   getExtensionColor().then(color => setIconColor(tabId, color));
