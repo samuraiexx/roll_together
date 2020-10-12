@@ -22,6 +22,8 @@ body.optionsBody {
   background-color: #5f5f5f;
   display: flex;
   justify-content: center;
+  margin: auto;
+  padding: 4%;
 }
 
 .switch {
