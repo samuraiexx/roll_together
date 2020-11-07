@@ -1,0 +1,256 @@
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/roboto-v20-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Roboto'), local('Roboto-Regular'),
+       url('../fonts/Roboto-Regular.ttf') format('truetype'),
+       url('../fonts/roboto-v20-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/roboto-v20-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/roboto-v20-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/roboto-v20-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/roboto-v20-latin-regular.svg#Roboto') format('svg'); /* Legacy iOS */
+}
+
+body {
+  font-family: Roboto;
+  color: #333;
+  font-size: 15px;
+  line-height: 16px;
+}
+
+body.optionsBody {
+  background-color: #5f5f5f;
+  display: flex;
+  justify-content: center;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 30px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 23px;
+  width: 23px;
+  right: 23px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider:before {
+  transform: translateX(19px);
+}
+
+.slider.round {
+  border-radius: 40px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.optionsContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background-color: #FEFEFE;
+  width: 500px;
+  height: 410px;
+  border-radius: 10px;
+}
+
+h2 {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h1 {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0px;
+  height: 41px;
+  width: 139px;
+  background-color: #F78C25;
+  color: #FFFFFF;
+  outline: none;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: 18px;
+  line-height: 21px;
+  font-weight: bold;
+  border: 0px solid #34c1e5;
+  border-radius: 4px;
+}
+
+.optionsButtonContainer {
+  display: inline-flex;
+  width: 250px;
+  justify-content: space-evenly;
+}
+
+.optionButton {
+  transition: .4s;
+  display: flex;
+  height: 41px;
+  width: auto;
+  padding: 10px;
+  font-size: 14px;
+}
+
+input {
+  padding: 0px;
+  width: 75%;
+  height: 41px;
+  color: #FFFFFF;
+  outline: none;
+  align-items: center;
+  text-align: center;
+  font-size: 18px;
+  line-height: 21px;
+  font-weight: bold;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+#skipButton {
+  bottom: 80px;
+  position: absolute;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid white;
+  transition: opacity 0.5s;
+}
+
+#colorSelector > * {
+  margin-right: 8px;
+  margin-left: 8px;
+}
+
+.colorChangeButton {
+  border: 1px solid #333;
+  height: 30px;
+  width: 30px;
+  display: inline-flex;
+}
+
+button:hover {
+  filter: brightness(95%);
+}
+
+button:active {
+  filter: brightness(85%);
+}
+
+input {
+  line-height: 32px;
+  font-size: 18px;
+  width: 287px;
+  vertical-align: middle;
+  margin-bottom: 10px;
+  color: #444;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+
+.container {
+  width: 290px;
+  height: 205px;
+  background-color: white;
+  padding: 8px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  margin: auto;
+}
+
+.firstPage .secondPage {
+  display: none;
+}
+
+.mb32 {
+  margin-bottom: 32px;
+}
+
+.mt32 {
+  margin-top: 32px;
+}
+
+.mv32 {
+  margin-bottom: 32px;
+  margin-top: 32px;
+}
+
+.mb16 {
+  margin-bottom: 16px;
+}
+
+.mt16 {
+  margin-top: 16px;
+}
+
+.mv16 {
+  margin-bottom: 16px;
+  margin-top: 16px;
+}
+
+.mv0 {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.c-error { 
+  color: red;
+}

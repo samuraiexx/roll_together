@@ -4,9 +4,9 @@
   "description": "It's an extension that lets you and a friend synchronize your anime so you can watch together =]",
   "background": {
     "scripts": [
-      "socket.io.js",
-      "common.js",
-      "background.js"
+      "build/socket.io.js",
+      "build/common.js",
+      "build/background.js"
     ],
     "persistent": true
   },
@@ -17,11 +17,11 @@
         "*://static.crunchyroll.com/*"
       ],
       "css": [
-        "styles.css"
+        "build/styles.css"
       ],
       "js": [
-        "common.js",
-        "content_script.js"
+        "build/common.js",
+        "build/content_script.js"
       ]
     }
   ],
@@ -36,7 +36,7 @@
     "*://rt-skip-intro.azurewebsites.net/*"
   ],
   "page_action": {
-    "default_popup": "popup.html",
+    "default_popup": "build/popup.html",
     "default_icon": {
       "16": "images/get_started16.png",
       "32": "images/get_started32.png",
@@ -50,7 +50,7 @@
     "48": "images/get_started48.png",
     "128": "images/get_started128.png"
   },
-  "options_page": "options.html",
+  "options_page": "build/options.html",
   "manifest_version": 2,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArcGab+PzppC/+XejE0z7kusfAXlu5DA5nUgFsfMAhOaSdtuBHClmRt6Sxg4IBSADQ3IFX7CnrlS/wWEf2XheU+Ou1Uj7hKpEnI3ThCX6qJyz2GD200ywQmNVS++TOqoQV03nbfSUsHVLJm+HqYxZBlVVlmWk6mgjIwxjOI87DmUIx+VOjv+rtBYaaUg+38Ri/ROYiAFaewUfIQVFZuRuYHc5klg788rUmX4E2pl2e+UPFlzdfYatGBoVV2lQhP4g0NtfwvbOE6sOW3VDCAwrNyqz/3LDldIwyZHtYUOesvI/g0CrFi0faO0kkMJsTjGMyPLRwfnNau/TkKqLfCswxQIDAQAB"
 }
