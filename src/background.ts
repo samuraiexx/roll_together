@@ -1,24 +1,36 @@
 'use strict';
 
-import { 
-  BackgroundMessageTypes, 
-  WebpageMessageTypes, 
-  log, 
-  getParameterByName, 
-  getExtensionColor, 
-  getIntroFeatureState 
+import {
+  BackgroundMessageTypes,
+  WebpageMessageTypes,
+  log,
+  getParameterByName,
+  getExtensionColor,
+  getIntroFeatureState,
+  States
 } from "./common.js";
 
-const tabsInfo = {};
-const skipIntroSocket = io('https://rt-skip-intro.azurewebsites.net');
-const skipIntroPendingRequests = {};
+interface TabInfo {
+  tabId: number,
+  socket?: SocketIOClient.Socket,
+  roomId?: string
+}
+
+const tabsInfo: { [index: number]: TabInfo } = {};
+const skipIntroSocket: SocketIOClient.Socket = io('https://rt-skip-intro.azurewebsites.net');
+const skipIntroPendingRequests: { [index: string]: boolean } = {};
+
+function loadStyles(): void {
+  const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
+  const link: HTMLLinkElement = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = 'styles.css';
+  link.media = 'all';
+  head.appendChild(link);
+}
 
 loadStyles();
-
-const regex = /http.*:\/\/www\.crunchyroll.*\/[^\/]+\/episode.*/;
-chrome.tabs.onActivated.addListener(({ tabId }) => {
-  getExtensionColor().then(color => setIconColor(tabId, color));
-});
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
@@ -32,28 +44,32 @@ chrome.runtime.onInstalled.addListener(function () {
   });
 });
 
-chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+chrome.tabs.onActivated.addListener(async function ({ tabId }: chrome.tabs.TabActiveInfo): Promise<void> {
   getExtensionColor().then(color => setIconColor(tabId, color));
 });
 
-chrome.tabs.onRemoved.addListener(function (tabId) {
+chrome.tabs.onUpdated.addListener(async function (tabId: number): Promise<void> {
+  getExtensionColor().then(color => setIconColor(tabId, color));
+});
+
+chrome.tabs.onRemoved.addListener(function (tabId: number): void {
   disconnectWebsocket(tabId);
   delete tabsInfo[tabId];
 });
 
-async function handleWebpageConnection(tab, url) {
-  const tabId = tab.id;
+async function handleWebpageConnection(tab: chrome.tabs.Tab, url: string): Promise<void> {
+  const tabId: number = tab.id;
 
   if (!tabsInfo[tabId]) {
     tabsInfo[tabId] = { tabId };
   }
 
-  const urlRoomId = getParameterByName(url, 'rollTogetherRoom');
+  const urlRoomId: string = getParameterByName(url, 'rollTogetherRoom');
   if (urlRoomId) {
     sendConnectionRequestToWebpage(tab);
   }
 
-  const skipIntro = await getIntroFeatureState();
+  const skipIntro: boolean = await getIntroFeatureState();
   if (skipIntro) {
     log('Sending skip intro marks request.', { url });
     skipIntroSocket.emit('skip-marks', url);
@@ -61,7 +77,7 @@ async function handleWebpageConnection(tab, url) {
   }
 }
 
-function tryUpdatePopup() {
+function tryUpdatePopup(): void {
   try {
     window.updatePopup && window.updatePopup();
   } catch {
@@ -69,11 +85,11 @@ function tryUpdatePopup() {
   }
 }
 
-function disconnectWebsocket(tabId) {
+function disconnectWebsocket(tabId: number): void {
   if (!tabsInfo[tabId]) {
     return;
   }
-  const { socket } = tabsInfo[tabId]
+  const { socket }: TabInfo = tabsInfo[tabId];
 
   if (socket) {
     socket.disconnect();
@@ -84,12 +100,18 @@ function disconnectWebsocket(tabId) {
   tryUpdatePopup();
 }
 
+interface SessionStatus {
+  state: States,
+  currentProgress: number,
+  type: WebpageMessageTypes
+}
+
 chrome.runtime.onMessage.addListener(
-  function ({ state, currentProgress, type }, sender) {
-    const tabId = sender.tab.id;
-    const tabInfo = tabsInfo[tabId];
-    const url = sender.tab.url;
-    const urlRoomId = getParameterByName(url);
+  function ({ state, currentProgress, type }: SessionStatus, sender: chrome.runtime.MessageSender): void {
+    const tabId: number = sender.tab.id;
+    const tabInfo: TabInfo = tabsInfo[tabId];
+    const url: string = sender.tab.url;
+    const urlRoomId: string = getParameterByName(url);
 
     log('Received webpage message', { type, state, currentProgress, url, sender });
     switch (type) {
@@ -108,20 +130,20 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-function sendUpdateToWebpage(tabId, roomState, roomProgress) {
+function sendUpdateToWebpage(tabId: number, roomState: States, roomProgress: number): void {
   log('Sending update to webpage', { tabId, roomState, roomProgress });
-  const tabInfo = tabsInfo[tabId];
+  const tabInfo: TabInfo = tabsInfo[tabId];
 
-  const type = BackgroundMessageTypes.REMOTE_UPDATE;
+  const type: BackgroundMessageTypes = BackgroundMessageTypes.REMOTE_UPDATE;
   chrome.tabs.sendMessage(tabId, { type, roomState, roomProgress });
 }
 
-function sendConnectionRequestToWebpage(tab) {
-  const tabId = tab.id;
-  const tabInfo = tabsInfo[tabId];
+function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
+  const tabId: number = tab.id;
+  const tabInfo: TabInfo = tabsInfo[tabId];
 
   if (tabInfo.socket != null) {
-    if (getParameterByName(tab.url, 'rollTogetherRoom') === tabsInfo['roomId']) {
+    if (getParameterByName(tab.url, 'rollTogetherRoom') === tabInfo.roomId) {
       return;
     }
     disconnectWebsocket(tabId);
@@ -132,15 +154,15 @@ function sendConnectionRequestToWebpage(tab) {
   chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.ROOM_CONNECTION });
 }
 
-function connectWebsocket(tabId, videoProgress, videoState, urlRoomId) {
+function connectWebsocket(tabId: number, videoProgress: number, videoState: States, urlRoomId: string) {
   log('Connecting websocket', { tabId, videoProgress, videoState, urlRoomId });
-  const tabInfo = tabsInfo[tabId];
+  const tabInfo: TabInfo = tabsInfo[tabId];
 
-  let query = `videoProgress=${Math.round(videoProgress)}&videoState=${videoState}${(urlRoomId ? `&room=${urlRoomId}` : '')}`;
+  let query: string = `videoProgress=${Math.round(videoProgress)}&videoState=${videoState}${(urlRoomId ? `&room=${urlRoomId}` : '')}`;
 
   tabInfo.socket = io('https://roll-together.herokuapp.com/', { query });
 
-  tabInfo.socket.on('join', (receivedRoomId, roomState, roomProgress) => {
+  tabInfo.socket.on('join', (receivedRoomId: string, roomState: States, roomProgress: number): void => {
     tabInfo.roomId = receivedRoomId;
     log('Sucessfully joined a room', { roomId: tabInfo.roomId, roomState, roomProgress });
     tryUpdatePopup();
@@ -148,14 +170,14 @@ function connectWebsocket(tabId, videoProgress, videoState, urlRoomId) {
     sendUpdateToWebpage(tabId, roomState, roomProgress);
   });
 
-  tabInfo.socket.on('update', (id, roomState, roomProgress) => {
+  tabInfo.socket.on('update', (id: string, roomState: States, roomProgress: number): void => {
     log('Received update Message from ', id, { roomState, roomProgress });
     sendUpdateToWebpage(tabId, roomState, roomProgress);
   });
 }
 
-function setIconColor(tabId, color) {
-  const canvas = document.createElement('canvas');
+function setIconColor(tabId: number, color: string) {
+  const canvas: HTMLCanvasElement = document.createElement('canvas');
   canvas.height = canvas.width = 128;
 
   const ctx = canvas.getContext("2d");
@@ -176,7 +198,23 @@ function setIconColor(tabId, color) {
   });
 }
 
-function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+interface Radius {
+  tl: number,
+  tr: number,
+  br: number,
+  bl: number
+}
+
+function roundRect(
+  ctx,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number | Radius | undefined,
+  fill: boolean,
+  stroke: boolean | undefined
+): void {
   if (typeof stroke === 'undefined') {
     stroke = true;
   }
@@ -210,24 +248,22 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
   }
 }
 
-function loadStyles() {
-  const head = document.getElementsByTagName('head')[0];
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.type = 'text/css';
-  link.href = 'styles.css';
-  link.media = 'all';
-  head.appendChild(link);
+interface Marks {
+  animeName: string,
+  begin: number,
+  end: number,
+  episode: number,
+  id: number
 }
 
-skipIntroSocket.on('skip-marks', ({ url, marks, error }) => {
+skipIntroSocket.on('skip-marks', ({ url, marks, error } : { url: string, marks: Marks, error: any }): void => {
   log('Receiving skip intro marks response', { url, marks, error })
   delete skipIntroPendingRequests[url];
   if (error) {
     return;
   }
 
-  chrome.tabs.query({ url }, function (tabs) {
+  chrome.tabs.query({ url }, function (tabs: chrome.tabs.Tab[]): void {
     tabs.forEach(tab => {
       try {
         chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.SKIP_MARKS, marks });
@@ -238,7 +274,7 @@ skipIntroSocket.on('skip-marks', ({ url, marks, error }) => {
   })
 })
 
-skipIntroSocket.on('reconnect', () => {
+skipIntroSocket.on('reconnect', (): void => {
   log('Reconnected')
   for (const url in skipIntroPendingRequests) {
     skipIntroSocket.emit('skip-marks', url)
@@ -248,6 +284,6 @@ skipIntroSocket.on('reconnect', () => {
 window.updatePopup = null;
 window.createRoom = sendConnectionRequestToWebpage;
 window.disconnectRoom = disconnectWebsocket;
-window.getRoomId = (tabId) => tabsInfo[tabId] && tabsInfo[tabId].roomId;
+window.getRoomId = (tabId: number): string => tabsInfo[tabId] && tabsInfo[tabId].roomId;
 
 log("Initialized");
