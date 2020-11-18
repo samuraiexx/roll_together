@@ -5,7 +5,7 @@ import {
   chineseSilver,
   log,
   crunchyrollOrange
-} from "./common";
+} from "./common.js";
 
 const colorSelector = document.getElementById("colorSelector");
 let addButton = document.getElementById("addButton");

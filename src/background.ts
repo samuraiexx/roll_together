@@ -7,7 +7,7 @@ import {
   getParameterByName, 
   getExtensionColor, 
   getIntroFeatureState 
-} from "./common";
+} from "./common.js";
 
 const tabsInfo = {};
 const skipIntroSocket = io('https://rt-skip-intro.azurewebsites.net');
@@ -215,7 +215,7 @@ function loadStyles() {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.type = 'text/css';
-  link.href = 'build/styles.css';
+  link.href = 'styles.css';
   link.media = 'all';
   head.appendChild(link);
 }

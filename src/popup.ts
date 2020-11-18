@@ -2,7 +2,7 @@ import {
   getExtensionColor,
   log,
   updateQueryStringParameter
-} from "./common";
+} from "./common.js";
 
 declare global {
   interface Window { 

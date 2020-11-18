@@ -2,7 +2,8 @@
   "compilerOptions": {
     "outDir": "./build",
     "allowJs": true,
-    "target": "ES2016"
+    "target": "ES2016",
+    "module": "esnext"
   },
   "include": ["./src/*"]
 }

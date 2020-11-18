@@ -1,13 +1,9 @@
 {
   "name": "Roll Together",
-  "version": "2.1",
+  "version": "3.0",
   "description": "It's an extension that lets you and a friend synchronize your anime so you can watch together =]",
   "background": {
-    "scripts": [
-      "build/socket.io.js",
-      "build/common.js",
-      "build/background.js"
-    ],
+    "page": "build/background.html",
     "persistent": true
   },
   "content_scripts": [
@@ -20,10 +16,14 @@
         "build/styles.css"
       ],
       "js": [
-        "build/common.js",
         "build/content_script.js"
       ]
     }
+  ],
+  "web_accessible_resources": [
+    "build/content_script.js",
+    "build/content_main.js",
+    "build/common.js"
   ],
   "content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
   "permissions": [
