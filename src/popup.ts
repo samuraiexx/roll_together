@@ -1,10 +1,18 @@
-interface Window { 
-  getRoomId: any; 
-  updatePopup: any;
-  createRoom: any;
-  disconnectRoom: any;
-  imageData: any;
-  data: any;
+import { 
+  getExtensionColor,
+  log,
+  updateQueryStringParameter
+} from "./common";
+
+declare global {
+  interface Window { 
+    getRoomId: any; 
+    updatePopup: any;
+    createRoom: any;
+    disconnectRoom: any;
+    imageData: any;
+    data: any;
+  }
 }
 
 const background = chrome.extension.getBackgroundPage();

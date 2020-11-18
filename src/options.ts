@@ -1,3 +1,12 @@
+import { 
+  getIntroFeatureState,
+  getExtensionColor,
+  getColorMenu,
+  chineseSilver,
+  log,
+  crunchyrollOrange
+} from "./common";
+
 const colorSelector = document.getElementById("colorSelector");
 let addButton = document.getElementById("addButton");
 let removeButton = document.getElementById("removeButton");

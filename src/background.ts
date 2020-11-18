@@ -1,5 +1,14 @@
 'use strict';
 
+import { 
+  BackgroundMessageTypes, 
+  WebpageMessageTypes, 
+  log, 
+  getParameterByName, 
+  getExtensionColor, 
+  getIntroFeatureState 
+} from "./common";
+
 const tabsInfo = {};
 const skipIntroSocket = io('https://rt-skip-intro.azurewebsites.net');
 const skipIntroPendingRequests = {};
