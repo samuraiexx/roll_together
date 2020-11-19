@@ -1,4 +1,5 @@
 'use strict';
+const io = require('socket.io-client');
 
 import {
   BackgroundMessageTypes,
@@ -8,7 +9,7 @@ import {
   getExtensionColor,
   getIntroFeatureState,
   States
-} from "./common.js";
+} from "./common";
 
 interface TabInfo {
   tabId: number,
@@ -256,7 +257,7 @@ export interface Marks {
   id: number
 }
 
-skipIntroSocket.on('skip-marks', ({ url, marks, error } : { url: string, marks: Marks, error: any }): void => {
+skipIntroSocket.on('skip-marks', ({ url, marks, error }: { url: string, marks: Marks, error: any }): void => {
   log('Receiving skip intro marks response', { url, marks, error })
   delete skipIntroPendingRequests[url];
   if (error) {

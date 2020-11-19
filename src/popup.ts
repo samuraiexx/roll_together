@@ -1,12 +1,14 @@
-import { 
+import _ from 'lodash';
+
+import {
   getExtensionColor,
   log,
   updateQueryStringParameter
-} from "./common.js";
+} from "./common";
 
 declare global {
-  interface Window { 
-    getRoomId: any; 
+  interface Window {
+    getRoomId: any;
     updatePopup: any;
     createRoom: any;
     disconnectRoom: any;
@@ -29,14 +31,6 @@ getExtensionColor().then((color: string): void => {
     button.style.backgroundColor = color;
   }
 });
-
-/*
-function executeScript(tabId, obj): Promise<void[]> {
-  return new Promise(
-    resolve => chrome.tabs.executeScript(tabId, obj, resolve)
-    );
-}
-*/
 
 function update() {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -86,6 +80,7 @@ disconnectButton.onclick = function (): void {
   })
 }
 
+urlInput.onclick = _.noop;
 background.window.updatePopup = update;
 
 update();
