@@ -180,7 +180,7 @@ function setIconColor(tabId: number, color: string) {
   const canvas: HTMLCanvasElement = document.createElement('canvas');
   canvas.height = canvas.width = 128;
 
-  const ctx = canvas.getContext("2d");
+  const ctx: CanvasRenderingContext2D = canvas.getContext("2d");
   ctx.font = "bold 92px roboto";
   ctx.textAlign = "center";
   ctx.fillStyle = color;
@@ -206,7 +206,7 @@ interface Radius {
 }
 
 function roundRect(
-  ctx,
+  ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   width: number,
@@ -248,7 +248,7 @@ function roundRect(
   }
 }
 
-interface Marks {
+export interface Marks {
   animeName: string,
   begin: number,
   end: number,
