@@ -7,24 +7,24 @@ import {
   crunchyrollOrange
 } from "./common.js";
 
-const colorSelector = document.getElementById("colorSelector");
-let addButton = document.getElementById("addButton");
-let removeButton = document.getElementById("removeButton");
-const input = document.getElementById("colorInput") as HTMLInputElement;
-const confirmationMessage = document.getElementById("confirmationMessage");
-const maxMenuSize = 10;
-const skipIntroCheckBox = document.getElementById("skipIntroCheckbox") as HTMLInputElement;
-const skipIntroCheckBoxSpan = document.getElementById("skipIntroCheckBoxSpan");
-let extensionColor = null;
+const colorSelector: HTMLDivElement = document.getElementById("colorSelector") as HTMLDivElement;
+let addButton: HTMLButtonElement = document.getElementById("addButton") as HTMLButtonElement;
+let removeButton: HTMLButtonElement = document.getElementById("removeButton") as HTMLButtonElement;
+const input: HTMLInputElement = document.getElementById("colorInput") as HTMLInputElement;
+const confirmationMessage: HTMLParagraphElement = document.getElementById("confirmationMessage") as HTMLParagraphElement;
+const maxMenuSize: number = 10;
+const skipIntroCheckBox: HTMLInputElement = document.getElementById("skipIntroCheckbox") as HTMLInputElement;
+const skipIntroCheckBoxSpan: HTMLSpanElement = document.getElementById("skipIntroCheckBoxSpan");
+let extensionColor: string = null;
 
-getIntroFeatureState().then((state : boolean) => {
+getIntroFeatureState().then((state : boolean): void => {
   skipIntroCheckBox.checked = state;
 });
 
-getExtensionColor().then(color => updateExtensionColor(color));
-getColorMenu().then(colorOptions => buildButtons(colorOptions));
+getExtensionColor().then((color: string): void => updateExtensionColor(color));
+getColorMenu().then((colorOptions: string[]): void => buildButtons(colorOptions));
 
-function setCheckBoxColor() {
+function setCheckBoxColor(): void {
   if(skipIntroCheckBox.checked) {
     skipIntroCheckBoxSpan.style.backgroundColor = extensionColor;
   } else {
@@ -32,18 +32,18 @@ function setCheckBoxColor() {
   }
 }
 
-skipIntroCheckBox.onclick = () => {
+skipIntroCheckBox.onclick = (): void => {
   setCheckBoxColor();
   setIntroFeatureState(skipIntroCheckBox.checked);
 }
 
-function setIntroFeatureState(state) {
-  chrome.storage.sync.set({ isIntroFeatureActive: state }, function () {
+function setIntroFeatureState(state: boolean): void {
+  chrome.storage.sync.set({ isIntroFeatureActive: state }, function (): void {
     log("Setting intro feature state to " + state);
   });
 }
 
-function updateExtensionColor(color) {
+function updateExtensionColor(color: string): void {
   extensionColor = color;
   setCheckBoxColor();
   input.value = color;
@@ -51,14 +51,14 @@ function updateExtensionColor(color) {
   removeButton.style.backgroundColor = color;
 }
 
-function updateColorMenu(colorOptions) {
+function updateColorMenu(colorOptions: string[]): void {
   while(colorSelector.lastChild) colorSelector.removeChild(colorSelector.lastChild);
   buildButtons(colorOptions);
 }
 
-function colorCodeValidation(color) {
+function colorCodeValidation(color: string): boolean {
   confirmationMessage.innerText = "";
-  const isOk = /^#([0-9A-F]{3}){1,2}$/i.test(color);
+  const isOk: boolean = /^#([0-9A-F]{3}){1,2}$/i.test(color);
 
   if (!isOk) {
     confirmationMessage.innerText = "Invalid hex code!";
@@ -69,10 +69,10 @@ function colorCodeValidation(color) {
   return true;
 }
 
-addButton.onclick = function() {
-  const color = input.value.toUpperCase();
+addButton.onclick = function(): void {
+  const color: string = input.value.toUpperCase();
 
-  getColorMenu().then((colorOptions: string[]) => {
+  getColorMenu().then((colorOptions: string[]): void => {
     if(colorOptions.length === maxMenuSize) {
       confirmationMessage.innerText = "You have reached the maximum menu size!";
       log("Max menu size reached");
@@ -81,7 +81,7 @@ addButton.onclick = function() {
 
     if(!colorCodeValidation(color)) return;
 
-    const isInMenu = colorOptions.includes(color);
+    const isInMenu: boolean = colorOptions.includes(color);
 
     if(isInMenu) {
       confirmationMessage.innerText = "This color is already in the menu";
@@ -99,8 +99,8 @@ addButton.onclick = function() {
   }); 
 }
 
-removeButton.onclick = function() {
-  const color = input.value.toUpperCase();
+removeButton.onclick = function(): void {
+  const color: string = input.value.toUpperCase();
 
   if(!colorCodeValidation(color)) return;
 
@@ -110,8 +110,8 @@ removeButton.onclick = function() {
     return;
   }
 
-  getColorMenu().then((colorOptions: string[]) => {
-    const isInMenu = colorOptions.includes(color);
+  getColorMenu().then((colorOptions: string[]): void => {
+    const isInMenu: boolean = colorOptions.includes(color);
 
     if(!isInMenu) {
       confirmationMessage.innerText = "This color isn't in the menu";
@@ -119,10 +119,10 @@ removeButton.onclick = function() {
       return;
     }
 
-    colorOptions = colorOptions.filter(function(element) { return element != color; });
+    colorOptions = colorOptions.filter(function(element: string): boolean { return element != color; });
 
-    getExtensionColor().then((currentColor: string) => {
-      const isInMenu = colorOptions.includes(currentColor);
+    getExtensionColor().then((currentColor: string): void => {
+      const isInMenu: boolean = colorOptions.includes(currentColor);
       if(!isInMenu) {
         setExtensionColor(crunchyrollOrange);
         updateExtensionColor(crunchyrollOrange);
@@ -134,22 +134,22 @@ removeButton.onclick = function() {
   });
 }
 
-function setColorMenu(colorMenu) {
-  chrome.storage.sync.set({ colorOptions: colorMenu }, function () {
+function setColorMenu(colorMenu: string[]): void {
+  chrome.storage.sync.set({ colorOptions: colorMenu }, function (): void {
     log("Color menu updated");
   });
 }
 
-function setExtensionColor(color) {
-  chrome.storage.sync.set({ extensionColor: color }, function () {
+function setExtensionColor(color: string): void {
+  chrome.storage.sync.set({ extensionColor: color }, function (): void {
     log("Setting extension color to " + color);
   });
 }
 
-function buildButtons(colorOptions) {
+function buildButtons(colorOptions: string[]): void {
   for (let color of colorOptions) {
-    let newButton = document.createElement("button");
-    newButton.addEventListener("click", function () { 
+    let newButton: HTMLButtonElement = document.createElement("button");
+    newButton.addEventListener("click", function (): void { 
       setExtensionColor(color);
       updateExtensionColor(color);
     });
