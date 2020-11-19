@@ -7,45 +7,47 @@ import {
   BackgroundMessageTypes
 } from "./common.js";
 
-const ignoreNext = {};
+import { Marks } from "./background.js";
 
-let player = null;
-let lastFrameProgress = null;
+const ignoreNext: { [index: string]: boolean } = {};
 
-let beginIntro = null;
-let endIntro = null;
-let skipButton = null;
-let currentSkipButtonState = null;
+let player: HTMLVideoElement = null;
+let lastFrameProgress: number = null;
 
-const skipButtonStates = {
-  CONSTANT: 'constant',
-  HOVER: 'hover',
-  HIDDEN: 'hidden'
+let beginIntro: number = null;
+let endIntro: number = null;
+let skipButton: HTMLButtonElement = null;
+let currentSkipButtonState: skipButtonStates = null;
+
+enum skipButtonStates {
+  CONSTANT = 'constant',
+  HOVER = 'hover',
+  HIDDEN = 'hidden'
 };
 
-function getState(stateName) {
+function getState(stateName: string): boolean | number {
   return player[stateName];
 }
 
-function getStates() {
-  const [paused, currentProgress] = [
-    getState("paused"),
-    getState("currentTime"),
+function getStates(): { state: States, currentProgress: number, timeJump: boolean } {
+  const [paused, currentProgress]: [boolean, number] = [
+    getState("paused") as boolean,
+    getState("currentTime") as number,
   ];
 
   lastFrameProgress = lastFrameProgress || currentProgress;
 
-  const timeJump = Math.abs(currentProgress - lastFrameProgress) > LIMIT_DELTA_TIME;
-  const state = paused ? States.PAUSED : States.PLAYING;
+  const timeJump: boolean = Math.abs(currentProgress - lastFrameProgress) > LIMIT_DELTA_TIME;
+  const state: States = paused ? States.PAUSED : States.PLAYING;
 
   lastFrameProgress = currentProgress;
   return { state, currentProgress, timeJump };
 }
 
-function getSkipButtonState(currentProgress) {
+function getSkipButtonState(currentProgress: number): skipButtonStates {
   if (beginIntro === null) return skipButtonStates.HIDDEN;
 
-  const endConstantStateTime = Math.min(endIntro, beginIntro + 5);
+  const endConstantStateTime: number = Math.min(endIntro, beginIntro + 5);
 
   if (currentProgress >= beginIntro && currentProgress <= endConstantStateTime) {
     return skipButtonStates.CONSTANT;
@@ -58,17 +60,17 @@ function getSkipButtonState(currentProgress) {
   return skipButtonStates.HIDDEN;
 }
 
-function setSkipButtonState(currentProgress) {
-  let state = getSkipButtonState(currentProgress);
+function setSkipButtonState(currentProgress: number): void {
+  let state: skipButtonStates = getSkipButtonState(currentProgress);
 
   if (state === currentSkipButtonState) return;
 
   currentSkipButtonState = state;
 
   if (state === skipButtonStates.CONSTANT) {
-    skipButton.style.opacity = 1;
+    skipButton.style.opacity = '1';
   } else {
-    skipButton.style.opacity = 0;
+    skipButton.style.opacity = '0';
   }
 
   if (state === skipButtonStates.HIDDEN) {
@@ -78,8 +80,8 @@ function setSkipButtonState(currentProgress) {
   }
 }
 
-function createSkipButton() {
-  const videoContainer = document.getElementById("vilosRoot");
+function createSkipButton(): void {
+  const videoContainer: HTMLDivElement = document.getElementById("vilosRoot") as HTMLDivElement;
 
   if (videoContainer) {
     log("Creating skip button...");
@@ -92,31 +94,31 @@ function createSkipButton() {
 
       skipButton.style.display = 'none';
 
-      skipButton.onmouseout = () => {
+      skipButton.onmouseout = (): void => {
         if (currentSkipButtonState === skipButtonStates.CONSTANT) {
-          skipButton.style.opacity = 1;
+          skipButton.style.opacity = '1';
         } else {
-          skipButton.style.opacity = 0;
+          skipButton.style.opacity = '0';
         }
       };
 
-      skipButton.onmouseover = () => skipButton.style.opacity = 1;
+      skipButton.onmouseover = (): void => { skipButton.style.opacity = '1'; };
 
-      skipButton.onclick = () => triggerAction(Actions.TIMEUPDATE, endIntro);
+      skipButton.onclick = (): void => triggerAction(Actions.TIME_UPDATE, endIntro);
 
       videoContainer.appendChild(skipButton);
     }
   }
 }
 
-const handleLocalAction = action => () => {
+const handleLocalAction = (action: Actions) => (): void => {
   if (ignoreNext[action] === true) {
     ignoreNext[action] = false;
     return;
   }
 
-  const { state, currentProgress, timeJump } = getStates();
-  const type = WebpageMessageTypes.LOCAL_UPDATE;
+  const { state, currentProgress, timeJump }: { state: States, currentProgress: number, timeJump: boolean } = getStates();
+  const type: WebpageMessageTypes = WebpageMessageTypes.LOCAL_UPDATE;
 
   log('Local Action', action, { type, state, currentProgress });
   switch (action) {
@@ -124,14 +126,14 @@ const handleLocalAction = action => () => {
     case Actions.PAUSE:
       chrome.runtime.sendMessage({ type, state, currentProgress });
       break;
-    case Actions.TIMEUPDATE:
+    case Actions.TIME_UPDATE:
       setSkipButtonState(currentProgress);
       timeJump && chrome.runtime.sendMessage({ type, state, currentProgress });
       break;
   }
 }
 
-function triggerAction(action, progress) {
+function triggerAction(action: Actions, progress: number): void {
   ignoreNext[action] = true;
 
   switch (action) {
@@ -142,7 +144,7 @@ function triggerAction(action, progress) {
     case Actions.PLAY:
       player.play();
       break;
-    case Actions.TIMEUPDATE:
+    case Actions.TIME_UPDATE:
       player.currentTime = progress;
       break;
     default:
@@ -150,31 +152,36 @@ function triggerAction(action, progress) {
   }
 }
 
-function sendRoomConnectionMessage() {
-  const { state, currentProgress } = getStates();
-  const type = WebpageMessageTypes.ROOM_CONNECTION;
+function sendRoomConnectionMessage(): void {
+  const { state, currentProgress }: { state: States, currentProgress: number } = getStates();
+  const type: WebpageMessageTypes = WebpageMessageTypes.ROOM_CONNECTION;
   chrome.runtime.sendMessage(
     { state, currentProgress, type }
   );
 }
 
-function handleRemoteUpdate({ roomState, roomProgress }) {
+interface BackgroundMessage {
+  type: BackgroundMessageTypes,
+  marks: Marks
+}
+
+function handleRemoteUpdate({ roomState, roomProgress }: { roomState: States, roomProgress: number }): void {
   log('Handling Remote Update', { roomState, roomProgress });
-  const { state, currentProgress } = getStates();
+  const { state, currentProgress }: { state: States, currentProgress: number } = getStates();
   if (state !== roomState) {
     if (roomState === States.PAUSED) triggerAction(Actions.PAUSE, roomProgress);
     if (roomState === States.PLAYING) triggerAction(Actions.PLAY, roomProgress);
   }
 
   if (Math.abs(roomProgress - currentProgress) > LIMIT_DELTA_TIME) {
-    triggerAction(Actions.TIMEUPDATE, roomProgress);
+    triggerAction(Actions.TIME_UPDATE, roomProgress);
   }
 }
 
 function handleBackgroundMessage(args) {
   log("Received message from Background", args);
 
-  const { type } = args;
+  const { type }: BackgroundMessage = args;
   switch (type) {
     case BackgroundMessageTypes.ROOM_CONNECTION:
       sendRoomConnectionMessage();
@@ -183,7 +190,7 @@ function handleBackgroundMessage(args) {
       handleRemoteUpdate(args);
       break;
     case BackgroundMessageTypes.SKIP_MARKS:
-      const { marks: { begin, end } } = args;
+      const { marks: { begin, end } }: BackgroundMessage = args;
       beginIntro = begin;
       endIntro = end;
       break;
@@ -192,8 +199,8 @@ function handleBackgroundMessage(args) {
   }
 }
 
-export function runContentScript() {
-  player = document.getElementById("player0");
+export function runContentScript(): void {
+  player = document.getElementById("player0") as HTMLVideoElement;
 
   if (!player) {
     setTimeout(runContentScript, 500);
