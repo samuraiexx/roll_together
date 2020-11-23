@@ -1,4 +1,5 @@
 'use strict';
+import io from 'socket.io-client';
 
 import {
   BackgroundMessageTypes,
@@ -8,7 +9,7 @@ import {
   getExtensionColor,
   getIntroFeatureState,
   States
-} from "./common.js";
+} from "./common";
 
 interface TabInfo {
   tabId: number,
@@ -154,7 +155,7 @@ function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
   chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.ROOM_CONNECTION });
 }
 
-function connectWebsocket(tabId: number, videoProgress: number, videoState: States, urlRoomId: string) {
+function connectWebsocket(tabId: number, videoProgress: number, videoState: States, urlRoomId: string | null) {
   log('Connecting websocket', { tabId, videoProgress, videoState, urlRoomId });
   const tabInfo: TabInfo = tabsInfo[tabId];
 
@@ -256,7 +257,7 @@ export interface Marks {
   id: number
 }
 
-skipIntroSocket.on('skip-marks', ({ url, marks, error } : { url: string, marks: Marks, error: any }): void => {
+skipIntroSocket.on('skip-marks', ({ url, marks, error }: { url: string, marks: Marks, error: any }): void => {
   log('Receiving skip intro marks response', { url, marks, error })
   delete skipIntroPendingRequests[url];
   if (error) {

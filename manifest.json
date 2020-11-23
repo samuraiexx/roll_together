@@ -1,9 +1,11 @@
 {
   "name": "Roll Together",
-  "version": "3.0",
+  "version": "2.3.0",
   "description": "It's an extension that lets you and a friend synchronize your anime so you can watch together =]",
   "background": {
-    "page": "build/background.html",
+    "scripts": [
+      "background.js"
+    ],
     "persistent": true
   },
   "content_scripts": [
@@ -13,17 +15,12 @@
         "*://static.crunchyroll.com/*"
       ],
       "css": [
-        "build/styles.css"
+        "styles.css"
       ],
       "js": [
-        "build/content_script.js"
+        "content_script.js"
       ]
     }
-  ],
-  "web_accessible_resources": [
-    "build/content_script.js",
-    "build/content_main.js",
-    "build/common.js"
   ],
   "content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
   "permissions": [
@@ -36,7 +33,7 @@
     "*://rt-skip-intro.azurewebsites.net/*"
   ],
   "page_action": {
-    "default_popup": "build/popup.html",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "images/get_started16.png",
       "32": "images/get_started32.png",
@@ -50,7 +47,6 @@
     "48": "images/get_started48.png",
     "128": "images/get_started128.png"
   },
-  "options_page": "build/options.html",
-  "manifest_version": 2,
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArcGab+PzppC/+XejE0z7kusfAXlu5DA5nUgFsfMAhOaSdtuBHClmRt6Sxg4IBSADQ3IFX7CnrlS/wWEf2XheU+Ou1Uj7hKpEnI3ThCX6qJyz2GD200ywQmNVS++TOqoQV03nbfSUsHVLJm+HqYxZBlVVlmWk6mgjIwxjOI87DmUIx+VOjv+rtBYaaUg+38Ri/ROYiAFaewUfIQVFZuRuYHc5klg788rUmX4E2pl2e+UPFlzdfYatGBoVV2lQhP4g0NtfwvbOE6sOW3VDCAwrNyqz/3LDldIwyZHtYUOesvI/g0CrFi0faO0kkMJsTjGMyPLRwfnNau/TkKqLfCswxQIDAQAB"
+  "options_page": "options.html",
+  "manifest_version": 2
 }

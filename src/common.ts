@@ -1,4 +1,4 @@
-const DEBUG: boolean = true;
+const DEBUG: boolean = process.env.NODE_ENV === 'dev';
 const DISPLAY_DEBUG_TIME: boolean = false;
 
 export const LIMIT_DELTA_TIME: number = 3; // In Seconds
@@ -33,15 +33,9 @@ export enum WebpageMessageTypes {
   CONNECTION = 'connection',
 }
 
-type logMessage = string | string[] | object | object[];
-
-export function log(...logMessage: logMessage[]): void {
-  const debugTime = DISPLAY_DEBUG_TIME ? [(new Date()).toJSON()] : [];
-  
-  if (DEBUG) {
-    console.log(debugTime);
-    console.log(logMessage);
-  }
+export function log(...args: any): void {
+  const date: Array<any> = DISPLAY_DEBUG_TIME ? [(new Date()).toJSON()] : [];
+  return DEBUG && console.log(...date, ...args);
 }
 
 export function getParameterByName(url: string, name: string = 'rollTogetherRoom'): string {
