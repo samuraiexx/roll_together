@@ -33,13 +33,9 @@ export enum WebpageMessageTypes {
   CONNECTION = 'connection',
 }
 
-export function log(...logMessage: any): void {
-  const debugTime = DISPLAY_DEBUG_TIME ? [(new Date()).toJSON()] : [];
-
-  if (DEBUG) {
-    console.log(debugTime);
-    console.log(logMessage);
-  }
+export function log(...args: any): void {
+  const date: Array<any> = DISPLAY_DEBUG_TIME ? [(new Date()).toJSON()] : [];
+  return DEBUG && console.log(...date, ...args);
 }
 
 export function getParameterByName(url: string, name: string = 'rollTogetherRoom'): string {
