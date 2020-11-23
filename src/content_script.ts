@@ -216,3 +216,5 @@ export function runContentScript(): void {
   chrome.runtime.onMessage.addListener(handleBackgroundMessage);
   chrome.runtime.sendMessage({ type: WebpageMessageTypes.CONNECTION });
 }
+
+runContentScript();

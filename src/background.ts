@@ -1,5 +1,5 @@
 'use strict';
-const io = require('socket.io-client');
+import io from 'socket.io-client';
 
 import {
   BackgroundMessageTypes,
@@ -155,7 +155,7 @@ function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
   chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.ROOM_CONNECTION });
 }
 
-function connectWebsocket(tabId: number, videoProgress: number, videoState: States, urlRoomId: string) {
+function connectWebsocket(tabId: number, videoProgress: number, videoState: States, urlRoomId: string | null) {
   log('Connecting websocket', { tabId, videoProgress, videoState, urlRoomId });
   const tabInfo: TabInfo = tabsInfo[tabId];
 
