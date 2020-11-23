@@ -20,7 +20,7 @@ const _ = require('lodash');
     }
 
     if (!stdout.includes("Your branch is up to date with 'origin/master'.")) {
-      throw "Your branch is up not to date with 'origin/master'.";
+      throw "Your branch is not up to date with 'origin/master'.";
     }
 
     await updateJsonFile(manifest, data => {
