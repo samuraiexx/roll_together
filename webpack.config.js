@@ -4,9 +4,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = env => {
-  const NODE_ENV = env && env.NODE_ENV ? env.NODE_ENV : 'dev';
-
-  const exports = {
+  return exports = {
     entry: {
       background: './src/background.ts',
       popup: './src/popup.ts',
@@ -42,14 +40,8 @@ module.exports = env => {
       }),
       new CleanWebpackPlugin(),
       new webpack.DefinePlugin({
-        'process.env.NODE_ENV': NODE_ENV
+        'process.env.NODE_ENV': JSON.stringify(env.NODE_ENV)
       }),
     ]
   };
-
-  if (NODE_ENV === 'dev') {
-    // exports.devtool = 'eval-source-map';
-  }
-
-  return exports;
 };
