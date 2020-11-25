@@ -14,8 +14,8 @@ const input: HTMLInputElement = document.getElementById("colorInput") as HTMLInp
 const confirmationMessage: HTMLParagraphElement = document.getElementById("confirmationMessage") as HTMLParagraphElement;
 const maxMenuSize: number = 10;
 const skipIntroCheckBox: HTMLInputElement = document.getElementById("skipIntroCheckbox") as HTMLInputElement;
-const skipIntroCheckBoxSpan: HTMLSpanElement = document.getElementById("skipIntroCheckBoxSpan");
-let extensionColor: string = null;
+const skipIntroCheckBoxSpan: HTMLSpanElement = document.getElementById("skipIntroCheckBoxSpan")!;
+let extensionColor: string | undefined = undefined;
 
 getIntroFeatureState().then((state: boolean): void => {
   skipIntroCheckBox.checked = state;
@@ -25,6 +25,9 @@ getExtensionColor().then((color: string): void => updateExtensionColor(color));
 getColorMenu().then((colorOptions: string[]): void => buildButtons(colorOptions));
 
 function setCheckBoxColor(): void {
+  if (extensionColor === undefined) {
+    return;
+  }
   if (skipIntroCheckBox.checked) {
     skipIntroCheckBoxSpan.style.backgroundColor = extensionColor;
   } else {

@@ -35,15 +35,16 @@ export enum WebpageMessageTypes {
 
 export function log(...args: any): void {
   const date: Array<any> = DISPLAY_DEBUG_TIME ? [(new Date()).toJSON()] : [];
-  return DEBUG && console.log(...date, ...args);
+  DEBUG && console.log(...date, ...args);
+  return;
 }
 
-export function getParameterByName(url: string, name: string = 'rollTogetherRoom'): string {
-  const queryString: string = /\?[^#]+(?=#|$)|$/.exec(url)[0];
+export function getParameterByName(url: string, name: string = 'rollTogetherRoom'): string | null {
+  const queryString: string = /\?[^#]+(?=#|$)|$/.exec(url)![0];
   const regex: RegExp = new RegExp("(?:[?&]|^)" + name + "=([^&#]*)");
-  const results: RegExpExecArray = regex.exec(queryString);
+  const results: RegExpExecArray | null = regex.exec(queryString);
 
-  if (!results || results.length < 2) {
+  if (results === null || results.length < 2) {
     return null;
   }
 
@@ -70,7 +71,7 @@ interface StorageData {
 export function getExtensionColor(): Promise<string> {
   return new Promise(resolve => {
     chrome.storage.sync.get({ extensionColor: crunchyrollOrange }, function (data: StorageData) {
-      resolve(data.extensionColor);
+      resolve(data.extensionColor as string);
     });
   });
 }
@@ -78,7 +79,7 @@ export function getExtensionColor(): Promise<string> {
 export function getColorMenu(): Promise<string[]> {
   return new Promise(resolve => {
     chrome.storage.sync.get({ colorOptions: defaultcolorOptions }, function (data: StorageData) {
-      resolve(data.colorOptions);
+      resolve(data.colorOptions as string[]);
     });
   });
 }
@@ -86,7 +87,7 @@ export function getColorMenu(): Promise<string[]> {
 export function getIntroFeatureState(): Promise<boolean> {
   return new Promise(resolve => {
     chrome.storage.sync.get({ isIntroFeatureActive: false }, function (data: StorageData) {
-      resolve(data.isIntroFeatureActive);
+      resolve(data.isIntroFeatureActive as boolean);
     });
   });
 }

@@ -11,13 +11,13 @@ import { Marks } from "./background";
 
 const ignoreNext: { [index: string]: boolean } = {};
 
-let player: HTMLVideoElement = null;
-let lastFrameProgress: number = null;
+let player: HTMLVideoElement | undefined = undefined;
+let lastFrameProgress: number | undefined = undefined;
 
-let beginIntro: number = null;
-let endIntro: number = null;
-let skipButton: HTMLButtonElement = null;
-let currentSkipButtonState: skipButtonStates = null;
+let beginIntro: number | undefined = undefined;
+let endIntro: number | undefined = undefined;
+let skipButton: HTMLButtonElement | undefined = undefined;
+let currentSkipButtonState: skipButtonStates | undefined = undefined;
 
 enum skipButtonStates {
   CONSTANT = 'constant',
@@ -26,7 +26,7 @@ enum skipButtonStates {
 };
 
 function getState(stateName: string): boolean | number {
-  return player[stateName];
+  return player![stateName];
 }
 
 function getStates(): { state: States, currentProgress: number, timeJump: boolean } {
@@ -45,7 +45,9 @@ function getStates(): { state: States, currentProgress: number, timeJump: boolea
 }
 
 function getSkipButtonState(currentProgress: number): skipButtonStates {
-  if (beginIntro === null) return skipButtonStates.HIDDEN;
+  if (beginIntro === undefined || endIntro === undefined) {
+    return skipButtonStates.HIDDEN;
+  }
 
   const endConstantStateTime: number = Math.min(endIntro, beginIntro + 5);
 
@@ -68,15 +70,15 @@ function setSkipButtonState(currentProgress: number): void {
   currentSkipButtonState = state;
 
   if (state === skipButtonStates.CONSTANT) {
-    skipButton.style.opacity = '1';
+    skipButton!.style.opacity = '1';
   } else {
-    skipButton.style.opacity = '0';
+    skipButton!.style.opacity = '0';
   }
 
   if (state === skipButtonStates.HIDDEN) {
-    skipButton.style.display = 'none';
+    skipButton!.style.display = 'none';
   } else {
-    skipButton.style.display = 'block';
+    skipButton!.style.display = 'block';
   }
 }
 
@@ -96,15 +98,15 @@ function createSkipButton(): void {
 
       skipButton.onmouseout = (): void => {
         if (currentSkipButtonState === skipButtonStates.CONSTANT) {
-          skipButton.style.opacity = '1';
+          skipButton!.style.opacity = '1';
         } else {
-          skipButton.style.opacity = '0';
+          skipButton!.style.opacity = '0';
         }
       };
 
-      skipButton.onmouseover = (): void => { skipButton.style.opacity = '1'; };
+      skipButton.onmouseover = (): void => { skipButton!.style.opacity = '1'; };
 
-      skipButton.onclick = (): void => triggerAction(Actions.TIME_UPDATE, endIntro);
+      skipButton.onclick = (): void => triggerAction(Actions.TIME_UPDATE, endIntro!);
 
       videoContainer.appendChild(skipButton);
     }
@@ -134,6 +136,10 @@ const handleLocalAction = (action: Actions) => (): void => {
 }
 
 function triggerAction(action: Actions, progress: number): void {
+  if (player === undefined) {
+    log("Player is Undefined so no action will be triggered");
+    return;
+  }
   ignoreNext[action] = true;
 
   switch (action) {

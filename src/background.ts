@@ -1,5 +1,6 @@
 'use strict';
 import io from 'socket.io-client';
+import _ from 'lodash';
 
 import {
   BackgroundMessageTypes,
@@ -59,13 +60,13 @@ chrome.tabs.onRemoved.addListener(function (tabId: number): void {
 });
 
 async function handleWebpageConnection(tab: chrome.tabs.Tab, url: string): Promise<void> {
-  const tabId: number = tab.id;
+  const tabId: number = tab.id!;
 
-  if (!tabsInfo[tabId]) {
+  if (_.isNull(tabsInfo[tabId])) {
     tabsInfo[tabId] = { tabId };
   }
 
-  const urlRoomId: string = getParameterByName(url, 'rollTogetherRoom');
+  const urlRoomId: string | null = getParameterByName(url, 'rollTogetherRoom');
   if (urlRoomId) {
     sendConnectionRequestToWebpage(tab);
   }
@@ -109,15 +110,15 @@ interface SessionStatus {
 
 chrome.runtime.onMessage.addListener(
   function ({ state, currentProgress, type }: SessionStatus, sender: chrome.runtime.MessageSender): void {
-    const tabId: number = sender.tab.id;
+    const tabId: number = sender.tab!.id!;
     const tabInfo: TabInfo = tabsInfo[tabId];
-    const url: string = sender.tab.url;
-    const urlRoomId: string = getParameterByName(url);
+    const url: string = sender.tab!.url!;
+    const urlRoomId: string | null = getParameterByName(url);
 
     log('Received webpage message', { type, state, currentProgress, url, sender });
     switch (type) {
       case WebpageMessageTypes.CONNECTION:
-        handleWebpageConnection(sender.tab, url)
+        handleWebpageConnection(sender.tab!, url)
         break;
       case WebpageMessageTypes.ROOM_CONNECTION:
         connectWebsocket(tabId, currentProgress, state, urlRoomId);
@@ -140,11 +141,11 @@ function sendUpdateToWebpage(tabId: number, roomState: States, roomProgress: num
 }
 
 function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
-  const tabId: number = tab.id;
+  const tabId: number = tab.id!;
   const tabInfo: TabInfo = tabsInfo[tabId];
 
   if (tabInfo.socket != null) {
-    if (getParameterByName(tab.url, 'rollTogetherRoom') === tabInfo.roomId) {
+    if (getParameterByName(tab.url!, 'rollTogetherRoom') === tabInfo.roomId) {
       return;
     }
     disconnectWebsocket(tabId);
@@ -152,7 +153,7 @@ function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
 
   log('Sending connection request to webpage', { tab });
 
-  chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.ROOM_CONNECTION });
+  chrome.tabs.sendMessage(tab.id!, { type: BackgroundMessageTypes.ROOM_CONNECTION });
 }
 
 function connectWebsocket(tabId: number, videoProgress: number, videoState: States, urlRoomId: string | null) {
@@ -181,7 +182,7 @@ function setIconColor(tabId: number, color: string) {
   const canvas: HTMLCanvasElement = document.createElement('canvas');
   canvas.height = canvas.width = 128;
 
-  const ctx: CanvasRenderingContext2D = canvas.getContext("2d");
+  const ctx: CanvasRenderingContext2D = canvas.getContext("2d")!;
   ctx.font = "bold 92px roboto";
   ctx.textAlign = "center";
   ctx.fillStyle = color;
@@ -267,7 +268,7 @@ skipIntroSocket.on('skip-marks', ({ url, marks, error }: { url: string, marks: M
   chrome.tabs.query({ url }, function (tabs: chrome.tabs.Tab[]): void {
     tabs.forEach(tab => {
       try {
-        chrome.tabs.sendMessage(tab.id, { type: BackgroundMessageTypes.SKIP_MARKS, marks });
+        chrome.tabs.sendMessage(tab.id!, { type: BackgroundMessageTypes.SKIP_MARKS, marks });
       } catch (e) {
         console.error(e);
       }
@@ -285,6 +286,6 @@ skipIntroSocket.on('reconnect', (): void => {
 window.updatePopup = null;
 window.createRoom = sendConnectionRequestToWebpage;
 window.disconnectRoom = disconnectWebsocket;
-window.getRoomId = (tabId: number): string => tabsInfo[tabId] && tabsInfo[tabId].roomId;
+window.getRoomId = (tabId: number): string | undefined => tabsInfo?.[tabId]?.roomId;
 
 log("Initialized");

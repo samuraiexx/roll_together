@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-const background: Window = chrome.extension.getBackgroundPage();
+const background: Window = chrome.extension.getBackgroundPage()!;
 
 const createRoomButton: HTMLButtonElement = document.getElementById('createRoom') as HTMLButtonElement;
 const copyUrlButton: HTMLButtonElement = document.getElementById('copyUrl') as HTMLButtonElement;
@@ -41,7 +41,7 @@ function update() {
     log('Updating Popup...', { roomId, connected });
 
     if (connected) {
-      const url: string = updateQueryStringParameter(tab.url, 'rollTogetherRoom', roomId)
+      const url: string = updateQueryStringParameter(tab.url!, 'rollTogetherRoom', roomId)
       urlInput.value = url;
       urlInput.focus();
       urlInput.select();
