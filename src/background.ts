@@ -19,8 +19,8 @@ interface TabInfo {
 }
 
 const tabsInfo: { [index: number]: TabInfo } = {};
-const skipIntroSocket: SocketIOClient.Socket = io('https://rt-skip-intro.azurewebsites.net');
 const skipIntroPendingRequests: { [index: string]: boolean } = {};
+let skipIntroSocket: SocketIOClient.Socket | undefined = undefined;
 
 function loadStyles(): void {
   const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
@@ -62,7 +62,7 @@ chrome.tabs.onRemoved.addListener(function (tabId: number): void {
 async function handleWebpageConnection(tab: chrome.tabs.Tab, url: string): Promise<void> {
   const tabId: number = tab.id!;
 
-  if (_.isNull(tabsInfo[tabId])) {
+  if (_.isNil(tabsInfo[tabId])) {
     tabsInfo[tabId] = { tabId };
   }
 
@@ -74,7 +74,8 @@ async function handleWebpageConnection(tab: chrome.tabs.Tab, url: string): Promi
   const skipIntro: boolean = await getIntroFeatureState();
   if (skipIntro) {
     log('Sending skip intro marks request.', { url });
-    skipIntroSocket.emit('skip-marks', url);
+    createSkipIntroSocket();
+    skipIntroSocket!.emit('skip-marks', url);
     skipIntroPendingRequests[url] = true;
   }
 }
@@ -258,30 +259,43 @@ export interface Marks {
   id: number
 }
 
-skipIntroSocket.on('skip-marks', ({ url, marks, error }: { url: string, marks: Marks, error: any }): void => {
-  log('Receiving skip intro marks response', { url, marks, error })
-  delete skipIntroPendingRequests[url];
-  if (error) {
+function createSkipIntroSocket() {
+  if (!_.isUndefined(skipIntroSocket)) {
     return;
   }
+  skipIntroSocket = io('https://rt-skip-intro.azurewebsites.net');
 
-  chrome.tabs.query({ url }, function (tabs: chrome.tabs.Tab[]): void {
-    tabs.forEach(tab => {
-      try {
-        chrome.tabs.sendMessage(tab.id!, { type: BackgroundMessageTypes.SKIP_MARKS, marks });
-      } catch (e) {
-        console.error(e);
-      }
+  skipIntroSocket.on('reconnect', (): void => {
+    log('Reconnected')
+    for (const url in skipIntroPendingRequests) {
+      skipIntroSocket!.emit('skip-marks', url)
+    }
+  })
+
+  skipIntroSocket.on('skip-marks', ({ url, marks, error }: { url: string, marks: Marks, error: any }): void => {
+    log('Receiving skip intro marks response', { url, marks, error })
+    delete skipIntroPendingRequests[url];
+
+    if (_.isEmpty(skipIntroPendingRequests)) {
+      skipIntroSocket!.disconnect();
+      skipIntroSocket = undefined;
+    }
+
+    if (error) {
+      return;
+    }
+
+    chrome.tabs.query({ url }, function (tabs: chrome.tabs.Tab[]): void {
+      tabs.forEach(tab => {
+        try {
+          chrome.tabs.sendMessage(tab.id!, { type: BackgroundMessageTypes.SKIP_MARKS, marks });
+        } catch (e) {
+          console.error(e);
+        }
+      })
     })
   })
-})
-
-skipIntroSocket.on('reconnect', (): void => {
-  log('Reconnected')
-  for (const url in skipIntroPendingRequests) {
-    skipIntroSocket.emit('skip-marks', url)
-  }
-})
+}
 
 window.updatePopup = null;
 window.createRoom = sendConnectionRequestToWebpage;

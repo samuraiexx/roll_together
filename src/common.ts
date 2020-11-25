@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 const DEBUG: boolean = process.env.NODE_ENV === 'dev';
 const DISPLAY_DEBUG_TIME: boolean = false;
 
@@ -44,7 +46,7 @@ export function getParameterByName(url: string, name: string = 'rollTogetherRoom
   const regex: RegExp = new RegExp("(?:[?&]|^)" + name + "=([^&#]*)");
   const results: RegExpExecArray | null = regex.exec(queryString);
 
-  if (results === null || results.length < 2) {
+  if (_.isNull(results) || results.length < 2) {
     return null;
   }
 

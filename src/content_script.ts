@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import {
   LIMIT_DELTA_TIME,
   States,
@@ -45,7 +47,7 @@ function getStates(): { state: States, currentProgress: number, timeJump: boolea
 }
 
 function getSkipButtonState(currentProgress: number): skipButtonStates {
-  if (beginIntro === undefined || endIntro === undefined) {
+  if (_.isUndefined(beginIntro) || _.isUndefined(endIntro)) {
     return skipButtonStates.HIDDEN;
   }
 
@@ -136,7 +138,7 @@ const handleLocalAction = (action: Actions) => (): void => {
 }
 
 function triggerAction(action: Actions, progress: number): void {
-  if (player === undefined) {
+  if (_.isNil(player)) {
     log("Player is Undefined so no action will be triggered");
     return;
   }

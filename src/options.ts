@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import {
   getIntroFeatureState,
   getExtensionColor,
@@ -25,7 +27,7 @@ getExtensionColor().then((color: string): void => updateExtensionColor(color));
 getColorMenu().then((colorOptions: string[]): void => buildButtons(colorOptions));
 
 function setCheckBoxColor(): void {
-  if (extensionColor === undefined) {
+  if (_.isUndefined(extensionColor)) {
     return;
   }
   if (skipIntroCheckBox.checked) {
