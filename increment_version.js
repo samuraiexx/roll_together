@@ -26,9 +26,13 @@ const _ = require("lodash");
       let [major, minor, patch] = data.version
         .split(".")
         .map((el) => parseInt(el ? el : 0));
-      if (isMajor) major++;
-      else if (isMinor) minor++;
-      else patch++;
+      if (isMajor) {
+        major++;
+        minir = patch = 0;
+      } else if (isMinor) {
+        minor++;
+        patch = 0;
+      } else patch++;
 
       data.version = `${major}.${minor}.${patch}`;
       return data;
