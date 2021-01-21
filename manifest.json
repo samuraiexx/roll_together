@@ -30,7 +30,7 @@
     "declarativeContent",
     "*://www.crunchyroll.com/*",
     "*://static.crunchyroll.com/*",
-    "*://rt-skip-intro.azurewebsites.net/*"
+    "*://roll-together-intro-skip.herokuapp.com/*"
   ],
   "page_action": {
     "default_popup": "popup.html",
