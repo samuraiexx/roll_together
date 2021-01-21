@@ -1,33 +1,33 @@
-const path = require('path');
+const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const webpack = require('webpack');
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const webpack = require("webpack");
 
-module.exports = env => {
-  return exports = {
+module.exports = (env) => {
+  return (exports = {
     entry: {
-      background: './src/background.ts',
-      popup: './src/popup.ts',
-      options: './src/options.ts',
-      content_script: './src/content_script.ts'
+      background: "./src/background.ts",
+      popup: "./src/popup.ts",
+      options: "./src/options.ts",
+      content_script: "./src/content_script.ts",
     },
     module: {
       rules: [
         {
           test: /\.tsx?$/,
-          use: 'ts-loader',
+          use: "ts-loader",
           exclude: /node_modules/,
         },
       ],
     },
     resolve: {
-      extensions: ['.tsx', '.ts', '.js'],
+      extensions: [".tsx", ".ts", ".js"],
     },
     output: {
-      filename: '[name].js',
-      path: path.resolve(__dirname, 'build'),
+      filename: "[name].js",
+      path: path.resolve(__dirname, "build"),
     },
-    optimization: { minimize: env.NODE_ENV === 'prod' },
+    // optimization: { minimize: env.NODE_ENV === 'prod' },
     plugins: [
       new CopyPlugin({
         patterns: [
@@ -41,8 +41,8 @@ module.exports = env => {
       }),
       new CleanWebpackPlugin(),
       new webpack.DefinePlugin({
-        'process.env.NODE_ENV': JSON.stringify(env.NODE_ENV)
+        "process.env.NODE_ENV": JSON.stringify(env.NODE_ENV),
       }),
-    ]
-  };
+    ],
+  });
 };
