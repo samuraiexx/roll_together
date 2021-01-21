@@ -2,7 +2,7 @@
   "scripts": {
     "build": "webpack --env NODE_ENV=dev",
     "watch": "webpack --env NODE_ENV-dev -w",
-    "publish": "node increment_version.js",
+    "publish": "npm run build && node increment_version.js",
     "postpublish": "webpack --env NODE_ENV=prod && cd build/ && bestzip ../rolltogether.zip *"
   },
   "private": true,
