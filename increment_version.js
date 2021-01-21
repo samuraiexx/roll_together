@@ -22,6 +22,10 @@ const _ = require("lodash");
       throw "Your branch is not up to date with 'origin/master'.";
     }
 
+    if (stdout.includes("Changes")) {
+      throw "You need to commit the current changes before publish.";
+    }
+
     await updateJsonFile("manifest.json", (data) => {
       let [major, minor, patch] = data.version
         .split(".")

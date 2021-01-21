@@ -27,7 +27,7 @@ module.exports = (env) => {
       filename: "[name].js",
       path: path.resolve(__dirname, "build"),
     },
-    // optimization: { minimize: env.NODE_ENV === 'prod' },
+    optimization: { minimize: false },
     plugins: [
       new CopyPlugin({
         patterns: [
