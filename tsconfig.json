@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "allowJs": true,
+    "target": "ES2016",
+    "module": "ESNext",
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "outDir": "./build",
+  },
+  "include": [
+    "./src/*"
+  ]
+}
