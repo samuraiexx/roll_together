@@ -1,19 +1,18 @@
-const updateJsonFile = require('update-json-file')
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-const _ = require('lodash');
+const updateJsonFile = require("update-json-file");
+const util = require("util");
+const exec = util.promisify(require("child_process").exec);
+const _ = require("lodash");
 
 (async () => {
-  return;
   try {
-    const isMajor = process.argv.includes('major');
-    const isMinor = process.argv.includes('minor');
+    const isMajor = process.argv.includes("major");
+    const isMinor = process.argv.includes("minor");
 
     if (isMajor && isMinor) {
       throw "Can't be both a major and a minor increment";
     }
 
-    const { stdout, stderr, error } = await exec('git pull && git status');
+    const { stdout, stderr, error } = await exec("git pull && git status");
 
     if (error) {
       throw stderr;
@@ -23,15 +22,17 @@ const _ = require('lodash');
       throw "Your branch is not up to date with 'origin/master'.";
     }
 
-    await updateJsonFile(manifest, data => {
-      let [major, minor, patch] = data.version.split('.').map(el => parseInt(el ? el : 0));
+    await updateJsonFile("manifest.json", (data) => {
+      let [major, minor, patch] = data.version
+        .split(".")
+        .map((el) => parseInt(el ? el : 0));
       if (isMajor) major++;
       else if (isMinor) minor++;
       else patch++;
 
       data.version = `${major}.${minor}.${patch}`;
-      return data
-    })
+      return data;
+    });
 
     await exec('git add * && git commit -m "Increment version" && git push');
 
