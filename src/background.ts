@@ -39,7 +39,7 @@ chrome.runtime.onInstalled.addListener(function () {
       {
         conditions: [
           new chrome.declarativeContent.PageStateMatcher({
-            pageUrl: { urlMatches: "http.*://www.crunchyroll.*/[^/]+/.*" },
+            pageUrl: { urlMatches: String.raw`http.?:\/\/[^\.]*\.crunchyroll\.` },
             css: ["iframe#vilos-player"],
           }),
         ],
