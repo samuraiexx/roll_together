@@ -42,7 +42,6 @@ chrome.runtime.onInstalled.addListener(function () {
             pageUrl: {
               urlMatches: String.raw`http.?:\/\/[^\.]*\.crunchyroll\.`,
             },
-            css: [`iframe[src*="static.crunchyroll.com"]`],
           }),
         ],
         actions: [new chrome.declarativeContent.ShowPageAction()],
