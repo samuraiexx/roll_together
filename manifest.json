@@ -1,6 +1,6 @@
 {
 	"name": "Roll Together",
-	"version": "2.9.3",
+	"version": "2.9.4",
 	"description": "Synchronize Crunchyroll Videos and Skip Intros",
 	"background": {
 		"scripts": [
