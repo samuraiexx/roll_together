@@ -93,6 +93,7 @@ function createSkipButton(): void {
     if (document.getElementById("skipButton") == null) {
       skipButton = document.createElement("button");
 
+      skipButton.style.zIndex = "1";
       skipButton.id = "skipButton";
       skipButton.innerText = "Skip Intro";
 
