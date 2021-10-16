@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-const DEBUG: boolean = process.env.NODE_ENV === "dev";
+const DEBUG: boolean = process.env.NODE_ENV === "development";
 const DISPLAY_DEBUG_TIME: boolean = false;
 
 export const LIMIT_DELTA_TIME: number = 3; // In Seconds

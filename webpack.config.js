@@ -1,10 +1,15 @@
+// @ts-check
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-  return (exports = {
+  console.log(env);
+
+  /** @type {webpack.Configuration} */
+  const config = {
+    mode: env.production ? "production" : "development",
     entry: {
       background: "./src/background.ts",
       popup: "./src/popup.ts",
@@ -28,7 +33,9 @@ module.exports = (env) => {
       path: path.resolve(__dirname, "build"),
     },
     optimization: { minimize: false },
+    devtool: env.production ? false : "inline-source-map",
     plugins: [
+      // @ts-ignore
       new CopyPlugin({
         patterns: [
           { from: "manifest.json" },
@@ -39,10 +46,10 @@ module.exports = (env) => {
           { from: "src/styles.css" },
         ],
       }),
+      // @ts-ignore
       new CleanWebpackPlugin(),
-      new webpack.DefinePlugin({
-        "process.env.NODE_ENV": JSON.stringify(env.NODE_ENV),
-      }),
     ],
-  });
+  };
+
+  return (exports = config);
 };
