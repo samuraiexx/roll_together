@@ -1,4 +1,3 @@
-"use strict";
 import io from "socket.io-client";
 import _ from "lodash";
 
@@ -10,6 +9,10 @@ import {
   getExtensionColor,
   getIntroFeatureState,
   States,
+  Marks,
+  RemoteUpdateBackgroundMessage,
+  RoomConnectionBackgroundMessage,
+  SkipMarksBackgroundMessage,
 } from "./common";
 
 interface TabInfo {
@@ -155,10 +158,13 @@ function sendUpdateToWebpage(
   roomProgress: number
 ): void {
   log("Sending update to webpage", { tabId, roomState, roomProgress });
-  const tabInfo: TabInfo = tabsInfo[tabId];
 
-  const type: BackgroundMessageTypes = BackgroundMessageTypes.REMOTE_UPDATE;
-  chrome.tabs.sendMessage(tabId, { type, roomState, roomProgress });
+  const message: RemoteUpdateBackgroundMessage = { 
+    type: BackgroundMessageTypes.REMOTE_UPDATE,
+    roomState,
+    roomProgress,
+  };
+  chrome.tabs.sendMessage(tabId, message);
 }
 
 function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
@@ -174,9 +180,10 @@ function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
 
   log("Sending connection request to webpage", { tab });
 
-  chrome.tabs.sendMessage(tab.id!, {
+  const message: RoomConnectionBackgroundMessage = {
     type: BackgroundMessageTypes.ROOM_CONNECTION,
-  });
+  };
+  chrome.tabs.sendMessage(tab.id!, message);
 }
 
 function connectWebsocket(
@@ -271,8 +278,9 @@ function roundRect(
   if (typeof radius === "number") {
     radius = { tl: radius, tr: radius, br: radius, bl: radius };
   } else {
-    const defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
-    for (var side in defaultRadius) {
+    const defaultRadius: Radius = { tl: 0, tr: 0, br: 0, bl: 0 };
+    for (let prop in defaultRadius) {
+      const side = prop as keyof Radius;
       radius[side] = radius[side] || defaultRadius[side];
     }
   }
@@ -300,14 +308,6 @@ function roundRect(
   }
 }
 
-export interface Marks {
-  animeName: string;
-  begin: number;
-  end: number;
-  episode: number;
-  id: number;
-}
-
 function getSkipIntroMarks(url: string): void {
   const xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
@@ -321,10 +321,11 @@ function getSkipIntroMarks(url: string): void {
     chrome.tabs.query({ url }, function (tabs: chrome.tabs.Tab[]): void {
       tabs.forEach((tab) => {
         try {
-          chrome.tabs.sendMessage(tab.id!, {
+          const message: SkipMarksBackgroundMessage = {
             type: BackgroundMessageTypes.SKIP_MARKS,
             marks,
-          });
+          };
+          chrome.tabs.sendMessage(tab.id!, message);
         } catch (e) {
           console.error(e);
         }

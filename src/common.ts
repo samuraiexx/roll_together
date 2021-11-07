@@ -14,6 +14,19 @@ const defaultcolorOptions: string[] = [
   crunchyrollOrange,
 ];
 
+export type PlayerStateProp = 
+  "controls" |
+  "currentTime" |
+  "defaultMuted" |
+  "defaultPlaybackRate" |
+  "duration" |
+  "ended" |
+  "loop" |
+  "muted" | 
+  "paused" | 
+  "playbackRate" |
+  "volume";
+
 export enum Actions {
   PLAY = "play",
   PAUSE = "pause",
@@ -31,6 +44,35 @@ export enum BackgroundMessageTypes {
   REMOTE_UPDATE = "remote_update",
   ROOM_CONNECTION = "room_connection",
   SKIP_MARKS = "skip_marks",
+}
+
+export interface Marks {
+  animeName: string;
+  begin: number;
+  end: number;
+  episode: number;
+  id: number;
+}
+
+export type BackgroundMessage = RemoteUpdateBackgroundMessage | RoomConnectionBackgroundMessage | SkipMarksBackgroundMessage;
+
+interface BackgroundMessageBase {
+  type: BackgroundMessageTypes,
+}
+
+export interface RemoteUpdateBackgroundMessage extends BackgroundMessageBase {
+  type: BackgroundMessageTypes.REMOTE_UPDATE,
+  roomState: States,
+  roomProgress: number,
+}
+
+export interface RoomConnectionBackgroundMessage extends BackgroundMessageBase {
+  type: BackgroundMessageTypes.ROOM_CONNECTION,
+}
+
+export interface SkipMarksBackgroundMessage extends BackgroundMessageBase {
+  type: BackgroundMessageTypes.SKIP_MARKS,
+  marks: Marks,
 }
 
 export enum WebpageMessageTypes {
@@ -111,4 +153,8 @@ export function getIntroFeatureState(): Promise<boolean> {
       }
     );
   });
+}
+
+export function enumKeys<O extends object, K extends keyof O = keyof O>(obj: O): K[] {
+  return Object.keys(obj).filter(k => Number.isNaN(+k)) as K[];
 }

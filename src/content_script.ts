@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _ from "lodash";
 
 import {
   LIMIT_DELTA_TIME,
@@ -6,10 +6,12 @@ import {
   log,
   Actions,
   WebpageMessageTypes,
-  BackgroundMessageTypes
+  BackgroundMessageTypes,
+  PlayerStateProp,
+  enumKeys,
+  RemoteUpdateBackgroundMessage,
+  BackgroundMessage
 } from "./common";
-
-import { Marks } from "./background";
 
 const ignoreNext: { [index: string]: boolean } = {};
 
@@ -22,12 +24,12 @@ let skipButton: HTMLButtonElement | undefined = undefined;
 let currentSkipButtonState: skipButtonStates | undefined = undefined;
 
 enum skipButtonStates {
-  CONSTANT = 'constant',
-  HOVER = 'hover',
-  HIDDEN = 'hidden'
+  CONSTANT = "constant",
+  HOVER = "hover",
+  HIDDEN = "hidden"
 };
 
-function getState(stateName: string): boolean | number {
+function getState(stateName: PlayerStateProp): boolean | number {
   return player![stateName];
 }
 
@@ -72,15 +74,15 @@ function setSkipButtonState(currentProgress: number): void {
   currentSkipButtonState = state;
 
   if (state === skipButtonStates.CONSTANT) {
-    skipButton!.style.opacity = '1';
+    skipButton!.style.opacity = "1";
   } else {
-    skipButton!.style.opacity = '0';
+    skipButton!.style.opacity = "0";
   }
 
   if (state === skipButtonStates.HIDDEN) {
-    skipButton!.style.display = 'none';
+    skipButton!.style.display = "none";
   } else {
-    skipButton!.style.display = 'block';
+    skipButton!.style.display = "block";
   }
 }
 
@@ -97,17 +99,17 @@ function createSkipButton(): void {
       skipButton.id = "skipButton";
       skipButton.innerText = "Skip Intro";
 
-      skipButton.style.display = 'none';
+      skipButton.style.display = "none";
 
       skipButton.onmouseout = (): void => {
         if (currentSkipButtonState === skipButtonStates.CONSTANT) {
-          skipButton!.style.opacity = '1';
+          skipButton!.style.opacity = "1";
         } else {
-          skipButton!.style.opacity = '0';
+          skipButton!.style.opacity = "0";
         }
       };
 
-      skipButton.onmouseover = (): void => { skipButton!.style.opacity = '1'; };
+      skipButton.onmouseover = (): void => { skipButton!.style.opacity = "1"; };
 
       skipButton.onclick = (): void => triggerAction(Actions.TIME_UPDATE, endIntro!);
 
@@ -125,7 +127,7 @@ const handleLocalAction = (action: Actions) => (): void => {
   const { state, currentProgress, timeJump }: { state: States, currentProgress: number, timeJump: boolean } = getStates();
   const type: WebpageMessageTypes = WebpageMessageTypes.LOCAL_UPDATE;
 
-  log('Local Action', action, { type, state, currentProgress });
+  log("Local Action", action, { type, state, currentProgress });
   switch (action) {
     case Actions.PLAY:
     case Actions.PAUSE:
@@ -169,13 +171,8 @@ function sendRoomConnectionMessage(): void {
   );
 }
 
-interface BackgroundMessage {
-  type: BackgroundMessageTypes,
-  marks: Marks
-}
-
-function handleRemoteUpdate({ roomState, roomProgress }: { roomState: States, roomProgress: number }): void {
-  log('Handling Remote Update', { roomState, roomProgress });
+function handleRemoteUpdate({ roomState, roomProgress }: RemoteUpdateBackgroundMessage): void {
+  log("Handling Remote Update", { roomState, roomProgress });
   const { state, currentProgress }: { state: States, currentProgress: number } = getStates();
   if (state !== roomState) {
     if (roomState === States.PAUSED) triggerAction(Actions.PAUSE, roomProgress);
@@ -187,11 +184,11 @@ function handleRemoteUpdate({ roomState, roomProgress }: { roomState: States, ro
   }
 }
 
-function handleBackgroundMessage(args) {
+function handleBackgroundMessage(args: BackgroundMessage) {
   log("Received message from Background", args);
 
-  const { type }: BackgroundMessage = args;
-  switch (type) {
+  const type = args.type;
+  switch (args.type) {
     case BackgroundMessageTypes.ROOM_CONNECTION:
       sendRoomConnectionMessage();
       break;
@@ -199,7 +196,7 @@ function handleBackgroundMessage(args) {
       handleRemoteUpdate(args);
       break;
     case BackgroundMessageTypes.SKIP_MARKS:
-      const { marks: { begin, end } }: BackgroundMessage = args;
+      const { marks: { begin, end } } = args;
       beginIntro = begin;
       endIntro = end;
       break;
@@ -216,7 +213,7 @@ export function runContentScript(): void {
     return;
   }
 
-  for (let action in Actions) {
+  for (let action of enumKeys(Actions)) {
     player.addEventListener(Actions[action], handleLocalAction(Actions[action]));
   }
 
