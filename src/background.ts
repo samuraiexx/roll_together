@@ -13,6 +13,7 @@ import {
   RemoteUpdateBackgroundMessage,
   RoomConnectionBackgroundMessage,
   SkipMarksBackgroundMessage,
+  BackgroundWindow,
 } from "./common";
 
 interface TabInfo {
@@ -21,9 +22,10 @@ interface TabInfo {
   roomId?: string;
 }
 
-const tabsInfo: { [index: number]: TabInfo } = {};
+const tabsInfo: { [index: number]: TabInfo | undefined } = {};
 const skipIntroUrl = "https://roll-together-intro-skip.herokuapp.com/";
 const serverUrl = process.env.SERVER_URL!;
+const window = global.window as BackgroundWindow;
 
 function loadStyles(): void {
   const head: HTMLHeadElement = document.getElementsByTagName("head")[0];
@@ -95,22 +97,28 @@ async function handleWebpageConnection(
 
 function tryUpdatePopup(): void {
   try {
-    window.updatePopup && window.updatePopup();
+    if (window.RollTogetherPopup?.update) {
+      window.RollTogetherPopup.update();
+    }
   } catch {
     // Do nothing as the popup is probably just closed
   }
 }
 
 function disconnectWebsocket(tabId: number): void {
-  if (!tabsInfo[tabId]) {
+  const tabInfo = tabsInfo[tabId];
+  if (!tabInfo) {
     return;
   }
-  const { socket }: TabInfo = tabsInfo[tabId];
 
+  // Disconnect socket and delete data from tab info
+  const { socket, roomId }: TabInfo = tabInfo;
   if (socket) {
     socket.disconnect();
-    delete tabsInfo[tabId].socket;
-    delete tabsInfo[tabId].roomId;
+    delete tabInfo.socket;
+  }
+  if (roomId) {
+    delete tabInfo.roomId;
   }
 
   tryUpdatePopup();
@@ -127,7 +135,7 @@ chrome.runtime.onMessage.addListener(function (
   sender: chrome.runtime.MessageSender
 ): void {
   const tabId: number = sender.tab!.id!;
-  const tabInfo: TabInfo = tabsInfo[tabId];
+  const tabInfo = tabsInfo[tabId];
   const url: string = sender.tab!.url!;
   const urlRoomId: string | null = getParameterByName(url);
 
@@ -146,7 +154,7 @@ chrome.runtime.onMessage.addListener(function (
       connectWebsocket(tabId, currentProgress, state, urlRoomId);
       break;
     case WebpageMessageTypes.LOCAL_UPDATE:
-      tabInfo.socket && tabInfo.socket.emit("update", state, currentProgress);
+      tabInfo?.socket && tabInfo.socket.emit("update", state, currentProgress);
       break;
     default:
       throw "Invalid WebpageMessageType " + type;
@@ -170,9 +178,9 @@ function sendUpdateToWebpage(
 
 function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
   const tabId: number = tab.id!;
-  const tabInfo: TabInfo = tabsInfo[tabId];
+  const tabInfo = tabsInfo[tabId];
 
-  if (tabInfo.socket != null) {
+  if (tabInfo?.socket) {
     if (getParameterByName(tab.url!, "rollTogetherRoom") === tabInfo.roomId) {
       return;
     }
@@ -199,7 +207,16 @@ function connectWebsocket(
     videoState,
     urlRoomId,
   });
-  const tabInfo: TabInfo = tabsInfo[tabId];
+  const tabInfo = tabsInfo[tabId];
+  if (!tabInfo) {
+    log(`No tab info found for tab ${tabId}`);
+    return;
+  }
+
+  if (tabInfo.socket) {
+    log(`Socket is already configured for tab ${tabId}. Disconnect existing connectionbefore attempting to connect.`);
+    return;
+  }
 
   let query: string = `videoProgress=${Math.round(
     videoProgress
@@ -244,9 +261,6 @@ function setIconColor(tabId: number, color: string) {
   ctx.fillText("RT", canvas.width / 2, canvas.height / 2 + 32);
 
   const imageData = ctx.getImageData(0, 0, 128, 128);
-  window.imageData = imageData;
-
-  window.data = imageData;
   chrome.pageAction.setIcon({
     imageData,
     tabId,
@@ -337,10 +351,11 @@ function getSkipIntroMarks(url: string): void {
   xhttp.send();
 }
 
-window.updatePopup = null;
-window.createRoom = sendConnectionRequestToWebpage;
-window.disconnectRoom = disconnectWebsocket;
-window.getRoomId = (tabId: number): string | undefined =>
-  tabsInfo?.[tabId]?.roomId;
+window.RollTogetherBackground = {
+  createRoom: sendConnectionRequestToWebpage,
+  disconnectRoom: disconnectWebsocket,
+  getRoomId: (tabId) => tabsInfo?.[tabId]?.roomId
+};
+window.RollTogetherPopup = {};
 
 log("Initialized");

@@ -1,23 +1,15 @@
 import _ from "lodash";
 
 import {
+  getBackgroundWindow,
   getExtensionColor,
   log,
   updateQueryStringParameter
 } from "./common";
 
-declare global {
-  interface Window {
-    getRoomId: any;
-    updatePopup: any;
-    createRoom: any;
-    disconnectRoom: any;
-    imageData: any;
-    data: any;
-  }
-}
-
-const background: Window = chrome.extension.getBackgroundPage()!;
+const backgroundWindow = getBackgroundWindow();
+const popup = backgroundWindow.RollTogetherPopup;
+const background = backgroundWindow.RollTogetherBackground;
 
 const createRoomButton: HTMLButtonElement = document.getElementById("createRoom") as HTMLButtonElement;
 const copyUrlButton: HTMLButtonElement = document.getElementById("copyUrl") as HTMLButtonElement;
@@ -35,13 +27,13 @@ getExtensionColor().then((color: string): void => {
 function update() {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     const tab: chrome.tabs.Tab = tabs[0];
-    const roomId: string = background.window.getRoomId(tab.id);
-    const connected: boolean = roomId != null;
+    const roomId = tab.id ? background.getRoomId(tab.id) : undefined;
+    const connected: boolean = !!roomId;
 
     log("Updating Popup...", { roomId, connected });
 
     if (connected) {
-      const url: string = updateQueryStringParameter(tab.url!, "rollTogetherRoom", roomId)
+      const url: string = updateQueryStringParameter(tab.url!, "rollTogetherRoom", roomId!)
       urlInput.value = url;
       urlInput.focus();
       urlInput.select();
@@ -62,13 +54,13 @@ function setElementDisplay(el: Element, display: string) {
 }
 
 window.addEventListener("beforeunload", (): void => {
-  background.window.updatePopup = null;
+  popup.update = undefined;
 });
 
 createRoomButton.onclick = async function (): Promise<void> {
   log("Clicking CreateRoomButton");
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs: chrome.tabs.Tab[]): void {
-    background.window.createRoom(tabs[0]);
+    background.createRoom(tabs[0]);
   });
 };
 
@@ -82,11 +74,14 @@ copyUrlButton.onclick = function (): void {
 disconnectButton.onclick = function (): void {
   log("Clicking DisconnectButton");
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs: chrome.tabs.Tab[]): void {
-    background.window.disconnectRoom(tabs[0].id);
+    const tabId = tabs[0].id;
+    if (tabId) {
+      background.disconnectRoom(tabId);
+    }
   })
 }
 
 urlInput.onclick = _.noop;
-background.window.updatePopup = update;
+popup.update = update;
 
 update();

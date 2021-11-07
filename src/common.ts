@@ -158,3 +158,23 @@ export function getIntroFeatureState(): Promise<boolean> {
 export function enumKeys<O extends object, K extends keyof O = keyof O>(obj: O): K[] {
   return Object.keys(obj).filter(k => Number.isNaN(+k)) as K[];
 }
+
+export function getBackgroundWindow() {
+  return chrome.extension.getBackgroundPage()?.window as BackgroundWindow;
+}
+
+type GlobalWindow = Window & typeof globalThis;
+export type BackgroundWindow = GlobalWindow & BackgroundWindowOverrides;
+interface BackgroundWindowOverrides  {
+  RollTogetherBackground: RollTogetherBackground;
+  RollTogetherPopup: RollTogetherPopup;
+}
+export interface RollTogetherBackground {
+  getRoomId: (tabId: number) => string | undefined;
+  createRoom: (tab: chrome.tabs.Tab) => void;
+  disconnectRoom: (tabId: number) => void;
+}
+
+export interface RollTogetherPopup {
+  update?: () => void;
+}
