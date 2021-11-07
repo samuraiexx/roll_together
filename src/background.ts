@@ -23,6 +23,7 @@ interface TabInfo {
 
 const tabsInfo: { [index: number]: TabInfo } = {};
 const skipIntroUrl = "https://roll-together-intro-skip.herokuapp.com/";
+const serverUrl = process.env.SERVER_URL!;
 
 function loadStyles(): void {
   const head: HTMLHeadElement = document.getElementsByTagName("head")[0];
@@ -204,7 +205,7 @@ function connectWebsocket(
     videoProgress
   )}&videoState=${videoState}${urlRoomId ? `&room=${urlRoomId}` : ""}`;
 
-  tabInfo.socket = io("https://roll-together.herokuapp.com/", { query });
+  tabInfo.socket = io(serverUrl, { query });
 
   tabInfo.socket.on(
     "join",

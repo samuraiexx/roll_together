@@ -4,6 +4,12 @@ const CopyPlugin = require("copy-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const webpack = require("webpack");
 
+// Environment variables
+/** @typedef {{SERVER_URL: string}} EnvJson */
+/** @typedef {{development: EnvJson, production: EnvJson}} EnvJsonFile */
+/** @type {EnvJsonFile} */
+const envVariables = require("./env.json");
+
 module.exports = (env) => {
   console.log(env);
 
@@ -48,6 +54,7 @@ module.exports = (env) => {
       }),
       // @ts-ignore
       new CleanWebpackPlugin(),
+      new webpack.EnvironmentPlugin(env.production ? envVariables.production : envVariables.development)
     ],
   };
 
