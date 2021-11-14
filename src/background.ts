@@ -108,6 +108,7 @@ function tryUpdatePopup(): void {
 function disconnectWebsocket(tabId: number): void {
   const tabInfo = tabsInfo[tabId];
   if (!tabInfo) {
+    log(`No tab info found for tab ${tabId}`);
     return;
   }
 
@@ -139,6 +140,10 @@ chrome.runtime.onMessage.addListener(function (
   const url: string = sender.tab!.url!;
   const urlRoomId: string | null = getParameterByName(url);
 
+  if (!tabInfo) {
+    log(`No tab info found for tab ${tabId}`);
+  }
+
   log("Received webpage message", {
     type,
     state,
@@ -154,7 +159,7 @@ chrome.runtime.onMessage.addListener(function (
       connectWebsocket(tabId, currentProgress, state, urlRoomId);
       break;
     case WebpageMessageTypes.LOCAL_UPDATE:
-      tabInfo?.socket && tabInfo.socket.emit("update", state, currentProgress);
+      tabInfo?.socket?.emit("update", state, currentProgress);
       break;
     default:
       throw "Invalid WebpageMessageType " + type;
@@ -179,6 +184,10 @@ function sendUpdateToWebpage(
 function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
   const tabId: number = tab.id!;
   const tabInfo = tabsInfo[tabId];
+  
+  if (!tabInfo) {
+    log(`No tab info found for tab ${tabId}`);
+  }
 
   if (tabInfo?.socket) {
     if (getParameterByName(tab.url!, "rollTogetherRoom") === tabInfo.roomId) {
@@ -214,7 +223,7 @@ function connectWebsocket(
   }
 
   if (tabInfo.socket) {
-    log(`Socket is already configured for tab ${tabId}. Disconnect existing connectionbefore attempting to connect.`);
+    log(`Socket is already configured for tab ${tabId}. Disconnect existing connection before attempting to connect.`);
     return;
   }
 

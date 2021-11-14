@@ -8,7 +8,7 @@ import {
   WebpageMessageTypes,
   BackgroundMessageTypes,
   PlayerStateProp,
-  enumKeys,
+  getEnumKeys,
   RemoteUpdateBackgroundMessage,
   BackgroundMessage
 } from "./common";
@@ -184,19 +184,19 @@ function handleRemoteUpdate({ roomState, roomProgress }: RemoteUpdateBackgroundM
   }
 }
 
-function handleBackgroundMessage(args: BackgroundMessage) {
-  log("Received message from Background", args);
+function handleBackgroundMessage(backgroundMessage: BackgroundMessage) {
+  log("Received message from Background", backgroundMessage);
 
-  const type = args.type;
-  switch (args.type) {
+  const type = backgroundMessage.type;
+  switch (backgroundMessage.type) {
     case BackgroundMessageTypes.ROOM_CONNECTION:
       sendRoomConnectionMessage();
       break;
     case BackgroundMessageTypes.REMOTE_UPDATE:
-      handleRemoteUpdate(args);
+      handleRemoteUpdate(backgroundMessage);
       break;
     case BackgroundMessageTypes.SKIP_MARKS:
-      const { marks: { begin, end } } = args;
+      const { marks: { begin, end } } = backgroundMessage;
       beginIntro = begin;
       endIntro = end;
       break;
@@ -213,7 +213,7 @@ export function runContentScript(): void {
     return;
   }
 
-  for (let action of enumKeys(Actions)) {
+  for (let action of getEnumKeys(Actions)) {
     player.addEventListener(Actions[action], handleLocalAction(Actions[action]));
   }
 

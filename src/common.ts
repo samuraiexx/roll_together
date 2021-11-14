@@ -155,7 +155,16 @@ export function getIntroFeatureState(): Promise<boolean> {
   });
 }
 
-export function enumKeys<O extends object, K extends keyof O = keyof O>(obj: O): K[] {
+/**
+ * Gets typed keys of an enum. Useful for iterating over an enum.
+ * @param obj The enum definition to get keys for.
+ * @returns Array of keys for accessing the enum.
+ */
+export function getEnumKeys<O extends object, K extends keyof O = keyof O>(obj: O): K[] {
+  // This works because of how enums are defined at runtime.
+  // For string enums, the Object.keys component covers it as the runtime object only includes key to value mappings.
+  // For number enums, we filter out numeric keys as TypeScript maps both the values to keys and keys to values.
+  // For heterogeneous enums, both of the above rules apply.
   return Object.keys(obj).filter(k => Number.isNaN(+k)) as K[];
 }
 
