@@ -1,15 +1,16 @@
 {
   "scripts": {
-    "build": "webpack --env NODE_ENV=dev",
-    "watch": "webpack --env NODE_ENV-dev -w",
+    "build": "webpack --env development",
+    "watch": "webpack --env development -w",
     "publish": "node increment_version.js",
-    "postpublish": "webpack --env NODE_ENV=prod && cd build/ && bestzip ../rolltogether.zip *"
+    "postpublish": "webpack --env production && cd build/ && bestzip ../rolltogether.zip *"
   },
   "private": true,
   "devDependencies": {
     "@types/chrome": "^0.0.126",
     "@types/lodash": "^4.14.165",
     "@types/socket.io-client": "^1.4.34",
+    "@types/webpack": "^5.28.0",
     "bestzip": "^2.1.7",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^6.3.1",
@@ -22,7 +23,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.20",
-    "socket.io-client": "2.3.0"
+    "socket.io-client": "^4.3.2"
   },
   "browser": "./build/background.js"
 }

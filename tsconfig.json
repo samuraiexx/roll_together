@@ -7,6 +7,8 @@
     "target": "ES2016",
     "module": "ESNext",
     "sourceMap": true,
+    "strict": true,
+    "alwaysStrict": true,
     "strictNullChecks": true,
     "outDir": "./build",
   },
