@@ -2,6 +2,11 @@
 	"name": "Roll Together",
 	"version": "2.9.4",
 	"description": "Synchronize Crunchyroll Videos and Skip Intros",
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "let.us.roll.together@gmail.com"
+		}
+	},
 	"background": {
 		"scripts": [
 			"background.js"
@@ -27,7 +32,6 @@
 		"storage",
 		"tabs",
 		"activeTab",
-		"declarativeContent",
 		"*://www.crunchyroll.com/*",
 		"*://static.crunchyroll.com/*",
 		"*://roll-together-intro-skip.herokuapp.com/*"
@@ -47,6 +51,8 @@
 		"48": "images/get_started48.png",
 		"128": "images/get_started128.png"
 	},
-	"options_page": "options.html",
+	"options_ui": {
+		"page": "options.html"
+	},
 	"manifest_version": 2
 }
