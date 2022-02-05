@@ -32,7 +32,7 @@ const _ = require("lodash");
         .map((el) => parseInt(el ? el : 0));
       if (isMajor) {
         major++;
-        minir = patch = 0;
+        minor = patch = 0;
       } else if (isMinor) {
         minor++;
         patch = 0;
