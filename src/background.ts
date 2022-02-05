@@ -39,21 +39,15 @@ function loadStyles(): void {
 
 loadStyles();
 
-chrome.runtime.onInstalled.addListener(function () {
-  chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
-    chrome.declarativeContent.onPageChanged.addRules([
-      {
-        conditions: [
-          new chrome.declarativeContent.PageStateMatcher({
-            pageUrl: {
-              urlMatches: String.raw`http.?:\/\/[^\.]*\.crunchyroll\.`,
-            },
-          }),
-        ],
-        actions: [new chrome.declarativeContent.ShowPageAction()],
-      },
-    ]);
-  });
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (
+    changeInfo.status === "complete" &&
+    tab.url!.match(/http.?:\/\/[^\.]*\.crunchyroll\./)
+  ) {
+    chrome.pageAction.show(tabId);
+  } else if (changeInfo.status === "complete") {
+    chrome.pageAction.hide(tabId);
+  }
 });
 
 chrome.tabs.onActivated.addListener(async function ({
