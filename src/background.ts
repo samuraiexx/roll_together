@@ -23,8 +23,8 @@ interface TabInfo {
 }
 
 const tabsInfo: { [index: number]: TabInfo | undefined } = {};
-const skipIntroUrl = "https://roll-together-intro-skip.herokuapp.com/";
-const serverUrl = process.env.SERVER_URL!;
+const skipIntroUrl = process.env.SKIP_INTRO_SERVER!;
+const serverUrl = process.env.SYNC_SERVER!;
 const window = global.window as BackgroundWindow;
 
 function loadStyles(): void {
@@ -173,7 +173,7 @@ function sendUpdateToWebpage(
 ): void {
   log("Sending update to webpage", { tabId, roomState, roomProgress });
 
-  const message: RemoteUpdateBackgroundMessage = { 
+  const message: RemoteUpdateBackgroundMessage = {
     type: BackgroundMessageTypes.REMOTE_UPDATE,
     roomState,
     roomProgress,
@@ -184,7 +184,7 @@ function sendUpdateToWebpage(
 function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
   const tabId: number = tab.id!;
   const tabInfo = tabsInfo[tabId];
-  
+
   if (!tabInfo) {
     log(`No tab info found for tab ${tabId}`);
   }
@@ -223,7 +223,9 @@ function connectWebsocket(
   }
 
   if (tabInfo.socket) {
-    log(`Socket is already configured for tab ${tabId}. Disconnect existing connection before attempting to connect.`);
+    log(
+      `Socket is already configured for tab ${tabId}. Disconnect existing connection before attempting to connect.`
+    );
     return;
   }
 
@@ -363,7 +365,7 @@ function getSkipIntroMarks(url: string): void {
 window.RollTogetherBackground = {
   createRoom: sendConnectionRequestToWebpage,
   disconnectRoom: disconnectWebsocket,
-  getRoomId: (tabId) => tabsInfo?.[tabId]?.roomId
+  getRoomId: (tabId) => tabsInfo?.[tabId]?.roomId,
 };
 window.RollTogetherPopup = {};
 
