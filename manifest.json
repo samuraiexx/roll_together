@@ -1,51 +1,42 @@
 {
-	"name": "Roll Together",
-	"version": "3.0.0",
-	"description": "Synchronize Crunchyroll Videos and Skip Intros",
-	"background": {
-		"scripts": [
-			"background.js"
-		],
-		"persistent": true
-	},
-	"content_scripts": [
-		{
-			"all_frames": true,
-			"matches": [
-				"*://static.crunchyroll.com/*"
-			],
-			"css": [
-				"styles.css"
-			],
-			"js": [
-				"content_script.js"
-			]
-		}
-	],
-	"content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
-	"permissions": [
-		"storage",
-		"tabs",
-		"declarativeContent",
-		"*://www.crunchyroll.com/*",
-		"*://static.crunchyroll.com/*",
-		"*://roll-together-intro-skip.herokuapp.com/*"
-	],
-	"page_action": {
-		"default_popup": "popup.html",
-		"default_icon": {
-			"16": "images/get_started16.png",
-			"32": "images/get_started32.png",
-			"48": "images/get_started48.png",
-			"128": "images/get_started128.png"
-		}
-	},
-	"icons": {
-		"16": "images/get_started16.png",
-		"32": "images/get_started32.png",
-		"48": "images/get_started48.png",
-		"128": "images/get_started128.png"
-	},
-	"options_page": "options.html",
-	"manifest_version": 2
+  "name": "Roll Together",
+  "version": "3.0.0",
+  "description": "Synchronize Crunchyroll Videos and Skip Intros",
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "all_frames": true,
+      "matches": ["*://static.crunchyroll.com/*"],
+      "css": ["styles.css"],
+      "js": ["content_script.js"]
+    }
+  ],
+  "content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
+  "permissions": [
+    "storage",
+    "declarativeContent",
+    "*://www.crunchyroll.com/*",
+    "*://static.crunchyroll.com/*",
+    "*://roll-together-intro-skip.herokuapp.com/*"
+  ],
+  "page_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/get_started16.png",
+      "32": "images/get_started32.png",
+      "48": "images/get_started48.png",
+      "128": "images/get_started128.png"
+    }
+  },
+  "icons": {
+    "16": "images/get_started16.png",
+    "32": "images/get_started32.png",
+    "48": "images/get_started48.png",
+    "128": "images/get_started128.png"
+  },
+  "options_page": "options.html",
+  "manifest_version": 2
 }
