@@ -20,6 +20,15 @@
 			"js": [
 				"content_script.js"
 			]
+		},
+		{
+			"all_frames": false,
+			"matches": [
+				"*://www.crunchyroll.com/*"
+			],
+			"js": [
+				"root_content_script.js"
+			]
 		}
 	],
 	"content_security_policy": "script-src 'self' 'sha256-3Ysffha/L9RFJ1cEzjlxPSHl7yyXbbb05h9eNgaAqgE='; object-src 'self'",
