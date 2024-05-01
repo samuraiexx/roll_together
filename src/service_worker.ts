@@ -2,117 +2,57 @@ import io from "socket.io-client";
 import _ from "lodash";
 
 import {
-  BackgroundMessageTypes,
-  WebpageMessageTypes,
   log,
   getParameterByName,
   getExtensionColor,
-  getIntroFeatureState,
-  States,
-  Marks,
-  RemoteUpdateBackgroundMessage,
-  RoomConnectionBackgroundMessage,
-  SkipMarksBackgroundMessage,
-  BackgroundWindow,
+  roundRect,
 } from "./common";
+import { Message, MessageTypes, PortName, States, TabInfo } from "./types";
 
-interface TabInfo {
-  tabId: number;
-  socket?: SocketIOClient.Socket;
-  roomId?: string;
-}
+declare const process: { env: { [key: string]: string | undefined } };
+declare const self: ServiceWorkerGlobalScope;
 
 const tabsInfo: { [index: number]: TabInfo | undefined } = {};
-const skipIntroUrl = process.env.SKIP_INTRO_SERVER!;
 const serverUrl = process.env.SYNC_SERVER!;
-const window = global.window as BackgroundWindow;
 
-function loadStyles(): void {
-  const head: HTMLHeadElement = document.getElementsByTagName("head")[0];
-  const link: HTMLLinkElement = document.createElement("link");
-  link.rel = "stylesheet";
-  link.type = "text/css";
-  link.href = "styles.css";
-  link.media = "all";
-  head.appendChild(link);
-}
+let popupPort: chrome.runtime.Port | undefined = undefined;
 
-loadStyles();
-
-chrome.runtime.onInstalled.addListener(function () {
-  chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
-    chrome.declarativeContent.onPageChanged.addRules([
-      {
-        conditions: [
-          new chrome.declarativeContent.PageStateMatcher({
-            pageUrl: {
-              urlMatches: String.raw`http.?:\/\/[^\.]*\.crunchyroll\.`,
-            },
-          }),
-        ],
-        actions: [new chrome.declarativeContent.ShowPageAction()],
-      },
-    ]);
-  });
-});
-
-chrome.tabs.onActivated.addListener(async function ({
-  tabId,
-}: chrome.tabs.TabActiveInfo): Promise<void> {
-  getExtensionColor().then((color) => setIconColor(tabId, color));
-});
-
-chrome.tabs.onUpdated.addListener(async function (
-  tabId: number
-): Promise<void> {
-  getExtensionColor().then((color) => setIconColor(tabId, color));
-});
-
-chrome.tabs.onRemoved.addListener(function (tabId: number): void {
-  disconnectWebsocket(tabId);
-  delete tabsInfo[tabId];
-});
-
-async function handleWebpageConnection(
-  tab: chrome.tabs.Tab,
-  url: string
-): Promise<void> {
-  const tabId: number = tab.id!;
+function handleContentScriptConnection(port: chrome.runtime.Port): void {
+  const tabId = port.sender?.tab?.id!;
+  const url = port.sender?.tab?.url!;
 
   if (_.isNil(tabsInfo[tabId])) {
-    tabsInfo[tabId] = { tabId };
+    tabsInfo[tabId] = { port, tabId };
   }
 
   const urlRoomId: string | null = getParameterByName(url, "rollTogetherRoom");
   if (urlRoomId) {
-    sendConnectionRequestToWebpage(tab);
-  }
-
-  const skipIntro: boolean = await getIntroFeatureState();
-  if (skipIntro) {
-    log("Sending skip intro marks request.", { url });
-    const marks = getSkipIntroMarks(url);
+    sendConnectionRequestToContentScript(tabId);
   }
 }
 
-function tryUpdatePopup(): void {
-  try {
-    if (window.RollTogetherPopup?.update) {
-      window.RollTogetherPopup.update();
-    }
-  } catch {
-    // Do nothing as the popup is probably just closed
-  }
+function handleContentScriptDisconnection(port: chrome.runtime.Port): void {
+  const tabId = port.sender?.tab?.id!;
+  disconnectWebsocket(tabId);
+  delete tabsInfo[tabId];
+}
+
+function tryUpdatePopup(roomId: string | undefined = undefined): void {
+  log("Trying to update popup", roomId);
+  popupPort?.postMessage({
+    type: MessageTypes.SW2PU_SEND_ROOM_ID,
+    roomId: roomId,
+  });
 }
 
 function disconnectWebsocket(tabId: number): void {
+  log("Disconnecting websocket", tabId);
   const tabInfo = tabsInfo[tabId];
   if (!tabInfo) {
     log(`No tab info found for tab ${tabId}`);
     return;
   }
 
-  // Disconnect socket and delete data from tab info
   const { socket, roomId }: TabInfo = tabInfo;
   if (socket) {
     socket.disconnect();
@@ -125,65 +65,82 @@ function disconnectWebsocket(tabId: number): void {
   tryUpdatePopup();
 }
 
-interface SessionStatus {
-  state: States;
-  currentProgress: number;
-  type: WebpageMessageTypes;
-}
-
-chrome.runtime.onMessage.addListener(function (
-  { state, currentProgress, type }: SessionStatus,
-  sender: chrome.runtime.MessageSender
-): void {
-  const tabId: number = sender.tab!.id!;
-  const tabInfo = tabsInfo[tabId];
-  const url: string = sender.tab!.url!;
-  const urlRoomId: string | null = getParameterByName(url);
-
-  if (!tabInfo) {
-    log(`No tab info found for tab ${tabId}`);
-  }
-
-  log("Received webpage message", {
-    type,
-    state,
-    currentProgress,
-    url,
-    sender,
-  });
-  switch (type) {
-    case WebpageMessageTypes.CONNECTION:
-      handleWebpageConnection(sender.tab!, url);
+function handlePopupMessage(message: Message, port: chrome.runtime.Port): void {
+  switch (message.type) {
+    case MessageTypes.PU2SW_CREATE_ROOM:
+      sendConnectionRequestToContentScript(message.tabId);
       break;
-    case WebpageMessageTypes.ROOM_CONNECTION:
-      connectWebsocket(tabId, currentProgress, state, urlRoomId);
+    case MessageTypes.PU2SW_DISCONNECT_ROOM:
+      disconnectWebsocket(message.tabId);
       break;
-    case WebpageMessageTypes.LOCAL_UPDATE:
-      tabInfo?.socket?.emit("update", state, currentProgress);
+    case MessageTypes.PU2SW_REQUEST_ROOM_ID:
+      tryUpdatePopup(tabsInfo[message.tabId]?.roomId);
       break;
     default:
-      throw "Invalid WebpageMessageType " + type;
+      throw "Invalid PopupMessageType " + message.type;
   }
-});
+}
 
-function sendUpdateToWebpage(
+function handleContentScriptMessage(
+  message: Message,
+  port: chrome.runtime.Port
+): void {
+  const senderUrl: string = port.sender?.tab?.url!;
+  const tabId = port.sender?.tab?.id!;
+  log("Received message from contentScript", { tabId, message });
+
+  switch (message.type) {
+    case MessageTypes.CS2SW_HEART_BEAT:
+      break;
+    case MessageTypes.CS2SW_ROOM_CONNECTION:
+      connectWebsocket(
+        tabId,
+        message.currentProgress,
+        message.state,
+        getParameterByName(senderUrl)
+      );
+      break;
+    case MessageTypes.CS2SW_LOCAL_UPDATE:
+      tabsInfo[tabId]?.socket?.emit(
+        "update",
+        message.state,
+        message.currentProgress
+      );
+      break;
+    default:
+      throw "Invalid ContentScriptMessageType " + message.type;
+  }
+}
+
+function handleTabChange(tabId: number): void {
+  if (tabsInfo[tabId] === undefined) {
+    chrome.action.disable();
+    return;
+  }
+  getExtensionColor().then((color) => setIconColor(tabId, color));
+  chrome.action.enable();
+}
+
+function sendUpdateToContentScript(
   tabId: number,
   roomState: States,
   roomProgress: number
 ): void {
-  log("Sending update to webpage", { tabId, roomState, roomProgress });
+  log("Sending update to contentScript", { tabId, roomState, roomProgress });
 
-  const message: RemoteUpdateBackgroundMessage = {
-    type: BackgroundMessageTypes.REMOTE_UPDATE,
+  const message: Message = {
+    type: MessageTypes.SW2CS_REMOTE_UPDATE,
     roomState,
     roomProgress,
   };
-  chrome.tabs.sendMessage(tabId, message);
+  tabsInfo[tabId]?.port.postMessage(message);
 }
 
-function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
-  const tabId: number = tab.id!;
+function sendConnectionRequestToContentScript(tabId: number): void {
   const tabInfo = tabsInfo[tabId];
+  log({ tabsInfo, tabInfo, tabId });
+  const port = tabInfo?.port!;
+  const tab = port.sender?.tab!;
 
   if (!tabInfo) {
     log(`No tab info found for tab ${tabId}`);
@@ -196,12 +153,12 @@ function sendConnectionRequestToWebpage(tab: chrome.tabs.Tab) {
     disconnectWebsocket(tabId);
   }
 
-  log("Sending connection request to webpage", { tab });
+  log("Sending connection request to contentScript", { tab });
 
-  const message: RoomConnectionBackgroundMessage = {
-    type: BackgroundMessageTypes.ROOM_CONNECTION,
+  const message: Message = {
+    type: MessageTypes.SW2CS_ROOM_CONNECTION,
   };
-  chrome.tabs.sendMessage(tab.id!, message);
+  port.postMessage(message);
 }
 
 function connectWebsocket(
@@ -233,8 +190,7 @@ function connectWebsocket(
     videoProgress
   )}&videoState=${videoState}${urlRoomId ? `&room=${urlRoomId}` : ""}`;
 
-  tabInfo.socket = io(serverUrl, { query });
-
+  tabInfo.socket = io(serverUrl, { query, transports: ["websocket"] });
   tabInfo.socket.on(
     "join",
     (receivedRoomId: string, roomState: States, roomProgress: number): void => {
@@ -244,9 +200,9 @@ function connectWebsocket(
         roomState,
         roomProgress,
       });
-      tryUpdatePopup();
+      tryUpdatePopup(tabInfo.roomId);
 
-      sendUpdateToWebpage(tabId, roomState, roomProgress);
+      sendUpdateToContentScript(tabId, roomState, roomProgress);
     }
   );
 
@@ -254,16 +210,15 @@ function connectWebsocket(
     "update",
     (id: string, roomState: States, roomProgress: number): void => {
       log("Received update Message from ", id, { roomState, roomProgress });
-      sendUpdateToWebpage(tabId, roomState, roomProgress);
+      sendUpdateToContentScript(tabId, roomState, roomProgress);
     }
   );
 }
 
-function setIconColor(tabId: number, color: string) {
-  const canvas: HTMLCanvasElement = document.createElement("canvas");
-  canvas.height = canvas.width = 128;
+function setIconColor(tabId: number, color: string): void {
+  const canvas = new OffscreenCanvas(128, 128);
 
-  const ctx: CanvasRenderingContext2D = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d")! as OffscreenCanvasRenderingContext2D;
   ctx.font = "bold 92px roboto";
   ctx.textAlign = "center";
   ctx.fillStyle = color;
@@ -272,101 +227,54 @@ function setIconColor(tabId: number, color: string) {
   ctx.fillText("RT", canvas.width / 2, canvas.height / 2 + 32);
 
   const imageData = ctx.getImageData(0, 0, 128, 128);
-  chrome.pageAction.setIcon({
+  chrome.action.setIcon({
     imageData,
     tabId,
   });
+
+  log("Set Icon Color", { tabId, color });
 }
 
-interface Radius {
-  tl: number;
-  tr: number;
-  br: number;
-  bl: number;
-}
+chrome.runtime.onConnect.addListener(function (port) {
+  log("Port connected", port.name);
+  switch (port.name) {
+    case PortName.POPUP:
+      popupPort = port;
+      log("Popup connected");
 
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number | Radius | undefined,
-  fill: boolean,
-  stroke: boolean | undefined
-): void {
-  if (typeof stroke === "undefined") {
-    stroke = true;
-  }
-  if (typeof radius === "undefined") {
-    radius = 5;
-  }
-  if (typeof radius === "number") {
-    radius = { tl: radius, tr: radius, br: radius, bl: radius };
-  } else {
-    const defaultRadius: Radius = { tl: 0, tr: 0, br: 0, bl: 0 };
-    for (let prop in defaultRadius) {
-      const side = prop as keyof Radius;
-      radius[side] = radius[side] || defaultRadius[side];
-    }
-  }
-  ctx.beginPath();
-  ctx.moveTo(x + radius.tl, y);
-  ctx.lineTo(x + width - radius.tr, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
-  ctx.lineTo(x + width, y + height - radius.br);
-  ctx.quadraticCurveTo(
-    x + width,
-    y + height,
-    x + width - radius.br,
-    y + height
-  );
-  ctx.lineTo(x + radius.bl, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
-  ctx.lineTo(x, y + radius.tl);
-  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
-  ctx.closePath();
-  if (fill) {
-    ctx.fill();
-  }
-  if (stroke) {
-    ctx.stroke();
-  }
-}
-
-function getSkipIntroMarks(url: string): void {
-  const xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function () {
-    if (this.readyState !== 4 || this.status !== 200) {
-      log(this.responseText);
-      return;
-    }
-    const marks = JSON.parse(this.responseText) as Marks;
-    log("Found the following skipMarks", marks);
-
-    chrome.tabs.query({ url }, function (tabs: chrome.tabs.Tab[]): void {
-      tabs.forEach((tab) => {
-        try {
-          const message: SkipMarksBackgroundMessage = {
-            type: BackgroundMessageTypes.SKIP_MARKS,
-            marks,
-          };
-          chrome.tabs.sendMessage(tab.id!, message);
-        } catch (e) {
-          console.error(e);
-        }
+      port.onDisconnect.addListener(() => {
+        popupPort = undefined;
+        log("Popup disconnected");
       });
-    });
-  };
-  xhttp.open("GET", `${skipIntroUrl}?url=${encodeURIComponent(url)}`, true);
-  xhttp.send();
-}
+      port.onMessage.addListener(handlePopupMessage);
+      break;
+    case PortName.CONTENT_SCRIPT:
+      handleContentScriptConnection(port);
+      log(`${port.name} connected`, port.sender?.tab?.id);
 
-window.RollTogetherBackground = {
-  createRoom: sendConnectionRequestToWebpage,
-  disconnectRoom: disconnectWebsocket,
-  getRoomId: (tabId) => tabsInfo?.[tabId]?.roomId,
-};
-window.RollTogetherPopup = {};
+      port.onDisconnect.addListener(() => {
+        handleContentScriptDisconnection(port);
+        log(`${port.name} disconnected`, port.sender?.tab?.id);
+      });
 
-log("Initialized");
+      port.onMessage.addListener(handleContentScriptMessage);
+      break;
+    default:
+      throw "Invalid PortName " + port.name;
+  }
+});
+
+chrome.tabs.onActivated.addListener(function ({
+  tabId,
+}: chrome.tabs.TabActiveInfo): void {
+  handleTabChange(tabId);
+});
+
+chrome.tabs.onUpdated.addListener(function (tabId: number): void {
+  handleTabChange(tabId);
+});
+
+chrome.action.disable();
+self.addEventListener = _.noop;
+
+log("Service Worker Loaded");

@@ -5,7 +5,7 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const webpack = require("webpack");
 
 // Environment variables
-/** @typedef {{SKIP_INTRO_SERVER: string, SYNC_SERVER: string}} EnvJson */
+/** @typedef {{SYNC_SERVER: string}} EnvJson */
 /** @typedef {{development: EnvJson, production: EnvJson}} EnvJsonFile */
 /** @type {EnvJsonFile} */
 const envVariables = require("./env.json");
@@ -17,10 +17,10 @@ module.exports = (env) => {
   const config = {
     mode: env.production ? "production" : "development",
     entry: {
-      background: "./src/background.ts",
+      service_worker: "./src/service_worker.ts",
+      content_script: "./src/content_script.ts",
       popup: "./src/popup.ts",
       options: "./src/options.ts",
-      content_script: "./src/content_script.ts",
     },
     module: {
       rules: [
@@ -60,5 +60,6 @@ module.exports = (env) => {
     ],
   };
 
+  // @ts-ignore
   return (exports = config);
 };

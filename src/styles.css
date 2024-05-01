@@ -154,15 +154,6 @@ input {
   border-radius: 4px;
 }
 
-#skipButton {
-  bottom: 80px;
-  position: absolute;
-  right: 20px;
-  background-color: rgba(0, 0, 0, 0.3);
-  border: 1px solid white;
-  transition: opacity 0.5s;
-}
-
 #colorSelector > * {
   margin-right: 8px;
   margin-left: 8px;

@@ -16,7 +16,6 @@ Instructions from https://developer.chrome.com/extensions/getstarted
 - [x] Customizable Palette
 - [x] Improve Logo/Name
 - [x] Improve structure to allow more than one tab at the same time
-- [x] Skip Intro Feature
 - [ ] Firefox Browser Support
 - [ ] Work with autoplay
 - [ ] Create a Website
