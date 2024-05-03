@@ -1,121 +1,45 @@
 import _ from "lodash";
 
+import { LIMIT_DELTA_TIME, log, getEnumKeys } from "./common";
+
 import {
-  LIMIT_DELTA_TIME,
   States,
-  log,
   Actions,
-  WebpageMessageTypes,
-  BackgroundMessageTypes,
   PlayerStateProp,
-  getEnumKeys,
-  RemoteUpdateBackgroundMessage,
-  BackgroundMessage
-} from "./common";
+  MessageTypes,
+  Message,
+  PortName,
+} from "./types";
+
+const g_port = chrome.runtime.connect({ name: PortName.CONTENT_SCRIPT });
 
 const ignoreNext: { [index: string]: boolean } = {};
-
-let player: HTMLVideoElement | undefined = undefined;
-let lastFrameProgress: number | undefined = undefined;
-
-let beginIntro: number | undefined = undefined;
-let endIntro: number | undefined = undefined;
-let skipButton: HTMLButtonElement | undefined = undefined;
-let currentSkipButtonState: skipButtonStates | undefined = undefined;
-
-enum skipButtonStates {
-  CONSTANT = "constant",
-  HOVER = "hover",
-  HIDDEN = "hidden"
-};
+let g_player: HTMLVideoElement | undefined = undefined;
+let g_lastFrameProgress: number | undefined = undefined;
+let g_heartBeatInterval: NodeJS.Timeout | undefined = undefined; // Keeps Service Worker alive while connected
 
 function getState(stateName: PlayerStateProp): boolean | number {
-  return player![stateName];
+  return g_player![stateName];
 }
 
-function getStates(): { state: States, currentProgress: number, timeJump: boolean } {
+function getStates(): {
+  state: States;
+  currentProgress: number;
+  timeJump: boolean;
+} {
   const [paused, currentProgress]: [boolean, number] = [
     getState("paused") as boolean,
     getState("currentTime") as number,
   ];
 
-  lastFrameProgress = lastFrameProgress || currentProgress;
+  g_lastFrameProgress = g_lastFrameProgress || currentProgress;
 
-  const timeJump: boolean = Math.abs(currentProgress - lastFrameProgress) > LIMIT_DELTA_TIME;
+  const timeJump: boolean =
+    Math.abs(currentProgress - g_lastFrameProgress) > LIMIT_DELTA_TIME;
   const state: States = paused ? States.PAUSED : States.PLAYING;
 
-  lastFrameProgress = currentProgress;
+  g_lastFrameProgress = currentProgress;
   return { state, currentProgress, timeJump };
-}
-
-function getSkipButtonState(currentProgress: number): skipButtonStates {
-  if (_.isUndefined(beginIntro) || _.isUndefined(endIntro)) {
-    return skipButtonStates.HIDDEN;
-  }
-
-  const endConstantStateTime: number = Math.min(endIntro, beginIntro + 5);
-
-  if (currentProgress >= beginIntro && currentProgress <= endConstantStateTime) {
-    return skipButtonStates.CONSTANT;
-  }
-
-  if (currentProgress > endConstantStateTime && currentProgress <= endIntro) {
-    return skipButtonStates.HOVER;
-  }
-
-  return skipButtonStates.HIDDEN;
-}
-
-function setSkipButtonState(currentProgress: number): void {
-  let state: skipButtonStates = getSkipButtonState(currentProgress);
-
-  if (state === currentSkipButtonState) return;
-
-  currentSkipButtonState = state;
-
-  if (state === skipButtonStates.CONSTANT) {
-    skipButton!.style.opacity = "1";
-  } else {
-    skipButton!.style.opacity = "0";
-  }
-
-  if (state === skipButtonStates.HIDDEN) {
-    skipButton!.style.display = "none";
-  } else {
-    skipButton!.style.display = "block";
-  }
-}
-
-function createSkipButton(): void {
-  const videoContainer: HTMLDivElement = document.getElementById("vilosRoot") as HTMLDivElement;
-
-  if (videoContainer) {
-    log("Creating skip button...");
-
-    if (document.getElementById("skipButton") == null) {
-      skipButton = document.createElement("button");
-
-      skipButton.style.zIndex = "1";
-      skipButton.id = "skipButton";
-      skipButton.innerText = "Skip Intro";
-
-      skipButton.style.display = "none";
-
-      skipButton.onmouseout = (): void => {
-        if (currentSkipButtonState === skipButtonStates.CONSTANT) {
-          skipButton!.style.opacity = "1";
-        } else {
-          skipButton!.style.opacity = "0";
-        }
-      };
-
-      skipButton.onmouseover = (): void => { skipButton!.style.opacity = "1"; };
-
-      skipButton.onclick = (): void => triggerAction(Actions.TIME_UPDATE, endIntro!);
-
-      videoContainer.appendChild(skipButton);
-    }
-  }
 }
 
 const handleLocalAction = (action: Actions) => (): void => {
@@ -124,24 +48,30 @@ const handleLocalAction = (action: Actions) => (): void => {
     return;
   }
 
-  const { state, currentProgress, timeJump }: { state: States, currentProgress: number, timeJump: boolean } = getStates();
-  const type: WebpageMessageTypes = WebpageMessageTypes.LOCAL_UPDATE;
+  const {
+    state,
+    currentProgress,
+    timeJump,
+  }: { state: States; currentProgress: number; timeJump: boolean } =
+    getStates();
+  const type = MessageTypes.CS2SW_LOCAL_UPDATE;
 
-  log("Local Action", action, { type, state, currentProgress });
+  log("Local Action", action, { type, state, currentProgress, timeJump });
   switch (action) {
     case Actions.PLAY:
     case Actions.PAUSE:
-      chrome.runtime.sendMessage({ type, state, currentProgress });
+      g_port.postMessage({ type, state, currentProgress });
       break;
     case Actions.TIME_UPDATE:
-      setSkipButtonState(currentProgress);
-      timeJump && chrome.runtime.sendMessage({ type, state, currentProgress });
+      if (timeJump) {
+        g_port.postMessage({ type, state, currentProgress });
+      }
       break;
   }
-}
+};
 
 function triggerAction(action: Actions, progress: number): void {
-  if (_.isNil(player)) {
+  if (_.isNil(g_player)) {
     log("Player is Undefined so no action will be triggered");
     return;
   }
@@ -149,14 +79,14 @@ function triggerAction(action: Actions, progress: number): void {
 
   switch (action) {
     case Actions.PAUSE:
-      player.pause();
-      player.currentTime = progress;
+      g_player.pause();
+      g_player.currentTime = progress;
       break;
     case Actions.PLAY:
-      player.play();
+      g_player.play();
       break;
     case Actions.TIME_UPDATE:
-      player.currentTime = progress;
+      g_player.currentTime = progress;
       break;
     default:
       ignoreNext[action] = false;
@@ -164,16 +94,21 @@ function triggerAction(action: Actions, progress: number): void {
 }
 
 function sendRoomConnectionMessage(): void {
-  const { state, currentProgress }: { state: States, currentProgress: number } = getStates();
-  const type: WebpageMessageTypes = WebpageMessageTypes.ROOM_CONNECTION;
-  chrome.runtime.sendMessage(
-    { state, currentProgress, type }
-  );
+  const { state, currentProgress }: { state: States; currentProgress: number } =
+    getStates();
+  const type = MessageTypes.CS2SW_ROOM_CONNECTION;
+  g_port.postMessage({ state, currentProgress, type });
 }
 
-function handleRemoteUpdate({ roomState, roomProgress }: RemoteUpdateBackgroundMessage): void {
+function handleRemoteUpdate(message: Message): void {
+  if (message.type != MessageTypes.SW2CS_REMOTE_UPDATE) {
+    throw "Invalid Message Type: " + message.type;
+  }
+  const { roomState, roomProgress } = message;
   log("Handling Remote Update", { roomState, roomProgress });
-  const { state, currentProgress }: { state: States, currentProgress: number } = getStates();
+
+  const { state, currentProgress }: { state: States; currentProgress: number } =
+    getStates();
   if (state !== roomState) {
     if (roomState === States.PAUSED) triggerAction(Actions.PAUSE, roomProgress);
     if (roomState === States.PLAYING) triggerAction(Actions.PLAY, roomProgress);
@@ -184,43 +119,46 @@ function handleRemoteUpdate({ roomState, roomProgress }: RemoteUpdateBackgroundM
   }
 }
 
-function handleBackgroundMessage(backgroundMessage: BackgroundMessage) {
-  log("Received message from Background", backgroundMessage);
+function handleServiceWorkerMessage(serviceWorkerMessage: Message) {
+  log("Received message from Background", serviceWorkerMessage);
 
-  const type = backgroundMessage.type;
-  switch (backgroundMessage.type) {
-    case BackgroundMessageTypes.ROOM_CONNECTION:
+  switch (serviceWorkerMessage.type) {
+    case MessageTypes.SW2CS_ROOM_CONNECTION:
+      g_heartBeatInterval = setInterval(
+        () => g_port.postMessage({ type: MessageTypes.CS2SW_HEART_BEAT }),
+        20000
+      );
       sendRoomConnectionMessage();
       break;
-    case BackgroundMessageTypes.REMOTE_UPDATE:
-      handleRemoteUpdate(backgroundMessage);
+    case MessageTypes.SW2CS_REMOTE_UPDATE:
+      handleRemoteUpdate(serviceWorkerMessage);
       break;
-    case BackgroundMessageTypes.SKIP_MARKS:
-      const { marks: { begin, end } } = backgroundMessage;
-      beginIntro = begin;
-      endIntro = end;
+    case MessageTypes.SW2CS_ROOM_DISCONNECT:
+      if (g_heartBeatInterval) {
+        clearInterval(g_heartBeatInterval);
+      }
       break;
     default:
-      throw "Invalid BackgroundMessageType: " + type;
+      throw "Invalid BackgroundMessageType: " + serviceWorkerMessage.type;
   }
 }
 
-export function runContentScript(): void {
-  player = document.getElementById("player0") as HTMLVideoElement;
+function runContentScript() {
+  g_player = document.getElementById("player0") as HTMLVideoElement;
 
-  if (!player) {
+  if (!g_player) {
     setTimeout(runContentScript, 500);
     return;
   }
 
-  for (let action of getEnumKeys(Actions)) {
-    player.addEventListener(Actions[action], handleLocalAction(Actions[action]));
+  for (const action of getEnumKeys(Actions)) {
+    g_player.addEventListener(
+      Actions[action],
+      handleLocalAction(Actions[action])
+    );
   }
 
-  createSkipButton();
-
-  chrome.runtime.onMessage.addListener(handleBackgroundMessage);
-  chrome.runtime.sendMessage({ type: WebpageMessageTypes.CONNECTION });
+  g_port.onMessage.addListener(handleServiceWorkerMessage);
 }
 
 runContentScript();

@@ -1,85 +1,21 @@
 import _ from "lodash";
+import { Radius, StorageData } from "./types";
+
+declare const process: any;
 
 const DEBUG: boolean = process.env.NODE_ENV === "development";
 const DISPLAY_DEBUG_TIME: boolean = false;
-
-export const LIMIT_DELTA_TIME: number = 3; // In Seconds
 const googleGreen: string = "#009688";
 const googleAquaBlue: string = "#00BBD3";
+
 export const crunchyrollOrange: string = "#F78C25";
-export const chineseSilver: string = "#CCC";
-const defaultcolorOptions: string[] = [
+
+export const LIMIT_DELTA_TIME: number = 3; // In Seconds
+const defaultColorOptions: string[] = [
   googleGreen,
   googleAquaBlue,
   crunchyrollOrange,
 ];
-
-export type PlayerStateProp = 
-  "controls" |
-  "currentTime" |
-  "defaultMuted" |
-  "defaultPlaybackRate" |
-  "duration" |
-  "ended" |
-  "loop" |
-  "muted" | 
-  "paused" | 
-  "playbackRate" |
-  "volume";
-
-export enum Actions {
-  PLAY = "play",
-  PAUSE = "pause",
-  READY = "ready",
-  ENDED = "ended",
-  TIME_UPDATE = "timeupdate",
-}
-
-export enum States {
-  PLAYING = "playing",
-  PAUSED = "paused",
-}
-
-export enum BackgroundMessageTypes {
-  REMOTE_UPDATE = "remote_update",
-  ROOM_CONNECTION = "room_connection",
-  SKIP_MARKS = "skip_marks",
-}
-
-export interface Marks {
-  animeName: string;
-  begin: number;
-  end: number;
-  episode: number;
-  id: number;
-}
-
-export type BackgroundMessage = RemoteUpdateBackgroundMessage | RoomConnectionBackgroundMessage | SkipMarksBackgroundMessage;
-
-interface BackgroundMessageBase {
-  type: BackgroundMessageTypes,
-}
-
-export interface RemoteUpdateBackgroundMessage extends BackgroundMessageBase {
-  type: BackgroundMessageTypes.REMOTE_UPDATE,
-  roomState: States,
-  roomProgress: number,
-}
-
-export interface RoomConnectionBackgroundMessage extends BackgroundMessageBase {
-  type: BackgroundMessageTypes.ROOM_CONNECTION,
-}
-
-export interface SkipMarksBackgroundMessage extends BackgroundMessageBase {
-  type: BackgroundMessageTypes.SKIP_MARKS,
-  marks: Marks,
-}
-
-export enum WebpageMessageTypes {
-  LOCAL_UPDATE = "local_update",
-  ROOM_CONNECTION = "room_connection",
-  CONNECTION = "connection",
-}
 
 export function log(...args: any): void {
   const date: Array<any> = DISPLAY_DEBUG_TIME ? [new Date().toJSON()] : [];
@@ -116,12 +52,6 @@ export function updateQueryStringParameter(
   }
 }
 
-interface StorageData {
-  extensionColor?: string;
-  colorOptions?: string[];
-  isIntroFeatureActive?: boolean;
-}
-
 export function getExtensionColor(): Promise<string> {
   return new Promise((resolve) => {
     chrome.storage.sync.get(
@@ -136,20 +66,9 @@ export function getExtensionColor(): Promise<string> {
 export function getColorMenu(): Promise<string[]> {
   return new Promise((resolve) => {
     chrome.storage.sync.get(
-      { colorOptions: defaultcolorOptions },
+      { colorOptions: defaultColorOptions },
       function (data: StorageData) {
         resolve(data.colorOptions as string[]);
-      }
-    );
-  });
-}
-
-export function getIntroFeatureState(): Promise<boolean> {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(
-      { isIntroFeatureActive: false },
-      function (data: StorageData) {
-        resolve(data.isIntroFeatureActive as boolean);
       }
     );
   });
@@ -160,30 +79,61 @@ export function getIntroFeatureState(): Promise<boolean> {
  * @param obj The enum definition to get keys for.
  * @returns Array of keys for accessing the enum.
  */
-export function getEnumKeys<O extends object, K extends keyof O = keyof O>(obj: O): K[] {
+export function getEnumKeys<O extends object, K extends keyof O = keyof O>(
+  obj: O
+): K[] {
   // This works because of how enums are defined at runtime.
   // For string enums, the Object.keys component covers it as the runtime object only includes key to value mappings.
   // For number enums, we filter out numeric keys as TypeScript maps both the values to keys and keys to values.
   // For heterogeneous enums, both of the above rules apply.
-  return Object.keys(obj).filter(k => Number.isNaN(+k)) as K[];
+  return Object.keys(obj).filter((k) => Number.isNaN(+k)) as K[];
 }
 
-export function getBackgroundWindow() {
-  return chrome.extension.getBackgroundPage()?.window as BackgroundWindow;
-}
-
-type GlobalWindow = Window & typeof globalThis;
-export type BackgroundWindow = GlobalWindow & BackgroundWindowOverrides;
-interface BackgroundWindowOverrides  {
-  RollTogetherBackground: RollTogetherBackground;
-  RollTogetherPopup: RollTogetherPopup;
-}
-export interface RollTogetherBackground {
-  getRoomId: (tabId: number) => string | undefined;
-  createRoom: (tab: chrome.tabs.Tab) => void;
-  disconnectRoom: (tabId: number) => void;
-}
-
-export interface RollTogetherPopup {
-  update?: () => void;
+export function roundRect(
+  ctx: OffscreenCanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number | Radius | undefined,
+  fill: boolean,
+  stroke: boolean | undefined
+): void {
+  if (typeof stroke === "undefined") {
+    stroke = true;
+  }
+  if (typeof radius === "undefined") {
+    radius = 5;
+  }
+  if (typeof radius === "number") {
+    radius = { tl: radius, tr: radius, br: radius, bl: radius };
+  } else {
+    const defaultRadius: Radius = { tl: 0, tr: 0, br: 0, bl: 0 };
+    for (let prop in defaultRadius) {
+      const side = prop as keyof Radius;
+      radius[side] = radius[side] || defaultRadius[side];
+    }
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius.tl, y);
+  ctx.lineTo(x + width - radius.tr, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+  ctx.lineTo(x + width, y + height - radius.br);
+  ctx.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - radius.br,
+    y + height
+  );
+  ctx.lineTo(x + radius.bl, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+  ctx.lineTo(x, y + radius.tl);
+  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+  ctx.closePath();
+  if (fill) {
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.stroke();
+  }
 }

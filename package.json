@@ -7,7 +7,7 @@
   },
   "private": true,
   "devDependencies": {
-    "@types/chrome": "^0.0.126",
+    "@types/chrome": "^0.0.266",
     "@types/lodash": "^4.14.165",
     "@types/socket.io-client": "^1.4.34",
     "@types/webpack": "^5.28.0",
@@ -22,8 +22,8 @@
     "webpack-cli": "^4.2.0"
   },
   "dependencies": {
-    "lodash": "^4.17.20",
-    "socket.io-client": "^4.3.2"
+    "lodash": "^4.17.21",
+    "socket.io-client": "^4.7.5"
   },
-  "browser": "./build/background.js"
+  "browser": "./build/service_worker.js"
 }
