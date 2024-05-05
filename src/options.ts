@@ -5,6 +5,7 @@ import {
   getColorMenu,
   log,
   crunchyrollOrange,
+  setIconColor,
 } from "./common";
 
 const colorSelector: HTMLDivElement = document.getElementById(
@@ -133,6 +134,13 @@ function setExtensionColor(color: string): void {
   chrome.storage.sync.set({ extensionColor: color }, function (): void {
     log("Setting extension color to " + color);
   });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+
+  const ctx = canvas.getContext("2d")!;
+  setIconColor(canvas, ctx, color);
 }
 
 function buildButtons(colorOptions: string[]): void {
