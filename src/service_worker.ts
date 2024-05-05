@@ -1,12 +1,7 @@
 import io from "socket.io-client";
 import _ from "lodash";
 
-import {
-  log,
-  getParameterByName,
-  getExtensionColor,
-  roundRect,
-} from "./common";
+import { log, getParameterByName, setIconColor } from "./common";
 import { Message, MessageTypes, PortName, States, TabInfo } from "./types";
 
 declare const process: { env: { [key: string]: string | undefined } };
@@ -22,17 +17,20 @@ function handleContentScriptConnection(port: chrome.runtime.Port): void {
   const url = port.sender?.tab?.url!;
 
   if (_.isNil(tabsInfo[tabId])) {
-    tabsInfo[tabId] = { port, tabId };
+    tabsInfo[tabId] = { port, tabId, sentConnectionRequest: false };
   }
 
   const urlRoomId: string | null = getParameterByName(url, "rollTogetherRoom");
-  if (urlRoomId) {
+  if (!_.isNil(urlRoomId)) {
     sendConnectionRequestToContentScript(tabId);
+  } else {
+    chrome.action.enable(tabId);
   }
 }
 
 function handleContentScriptDisconnection(port: chrome.runtime.Port): void {
   const tabId = port.sender?.tab?.id!;
+  chrome.action.disable(tabId);
   disconnectWebsocket(tabId);
   delete tabsInfo[tabId];
 }
@@ -112,15 +110,6 @@ function handleContentScriptMessage(
   }
 }
 
-function handleTabChange(tabId: number): void {
-  if (tabsInfo[tabId] === undefined) {
-    chrome.action.disable();
-    return;
-  }
-  getExtensionColor().then((color) => setIconColor(tabId, color));
-  chrome.action.enable();
-}
-
 function sendUpdateToContentScript(
   tabId: number,
   roomState: States,
@@ -139,14 +128,21 @@ function sendUpdateToContentScript(
 function sendConnectionRequestToContentScript(tabId: number): void {
   const tabInfo = tabsInfo[tabId];
   log({ tabsInfo, tabInfo, tabId });
-  const port = tabInfo?.port!;
-  const tab = port.sender?.tab!;
+  const port = tabInfo!.port!;
+  const tab = port.sender!.tab!;
 
-  if (!tabInfo) {
+  if (tabInfo == undefined) {
     log(`No tab info found for tab ${tabId}`);
+    return;
   }
 
-  if (tabInfo?.socket) {
+  if (tabInfo.sentConnectionRequest) {
+    log("Connection request already sent to contentScript", { tab });
+    return;
+  }
+  tabInfo.sentConnectionRequest = true;
+
+  if (tabInfo.socket) {
     if (getParameterByName(tab.url!, "rollTogetherRoom") === tabInfo.roomId) {
       return;
     }
@@ -201,6 +197,8 @@ function connectWebsocket(
         roomProgress,
       });
       tryUpdatePopup(tabInfo.roomId);
+      chrome.action.enable(tabId);
+      tabInfo.sentConnectionRequest = false;
 
       sendUpdateToContentScript(tabId, roomState, roomProgress);
     }
@@ -213,26 +211,6 @@ function connectWebsocket(
       sendUpdateToContentScript(tabId, roomState, roomProgress);
     }
   );
-}
-
-function setIconColor(tabId: number, color: string): void {
-  const canvas = new OffscreenCanvas(128, 128);
-
-  const ctx = canvas.getContext("2d")! as OffscreenCanvasRenderingContext2D;
-  ctx.font = "bold 92px roboto";
-  ctx.textAlign = "center";
-  ctx.fillStyle = color;
-  roundRect(ctx, 0, 0, canvas.width, canvas.height, 20, true, false);
-  ctx.fillStyle = "white";
-  ctx.fillText("RT", canvas.width / 2, canvas.height / 2 + 32);
-
-  const imageData = ctx.getImageData(0, 0, 128, 128);
-  chrome.action.setIcon({
-    imageData,
-    tabId,
-  });
-
-  log("Set Icon Color", { tabId, color });
 }
 
 chrome.runtime.onConnect.addListener(function (port) {
@@ -264,14 +242,10 @@ chrome.runtime.onConnect.addListener(function (port) {
   }
 });
 
-chrome.tabs.onActivated.addListener(function ({
-  tabId,
-}: chrome.tabs.TabActiveInfo): void {
-  handleTabChange(tabId);
-});
-
-chrome.tabs.onUpdated.addListener(function (tabId: number): void {
-  handleTabChange(tabId);
+chrome.runtime.onInstalled.addListener(() => {
+  const canvas = new OffscreenCanvas(128, 128);
+  const ctx = canvas.getContext("2d")! as OffscreenCanvasRenderingContext2D;
+  setIconColor(canvas, ctx);
 });
 
 chrome.action.disable();

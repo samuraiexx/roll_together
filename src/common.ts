@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _, { get } from "lodash";
 import { Radius, StorageData } from "./types";
 
 declare const process: any;
@@ -89,8 +89,32 @@ export function getEnumKeys<O extends object, K extends keyof O = keyof O>(
   return Object.keys(obj).filter((k) => Number.isNaN(+k)) as K[];
 }
 
+export async function setIconColor(
+  canvas: OffscreenCanvas | HTMLCanvasElement,
+  ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D,
+  color: string | undefined = undefined
+) {
+  if (color == undefined) {
+    color = await getExtensionColor();
+  }
+
+  ctx.font = "bold 92px roboto";
+  ctx.textAlign = "center";
+  ctx.fillStyle = color;
+  roundRect(ctx, 0, 0, canvas.width, canvas.height, 20, true, false);
+  ctx.fillStyle = "white";
+  ctx.fillText("RT", canvas.width / 2, canvas.height / 2 + 32);
+
+  const imageData = ctx.getImageData(0, 0, 128, 128);
+  chrome.action.setIcon({
+    imageData,
+  });
+
+  log("Set Icon Color", { color });
+}
+
 export function roundRect(
-  ctx: OffscreenCanvasRenderingContext2D,
+  ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D,
   x: number,
   y: number,
   width: number,

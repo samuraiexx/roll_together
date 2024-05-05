@@ -18,8 +18,8 @@ const _ = require("lodash");
       throw stderr;
     }
 
-    if (!stdout.includes("Your branch is up to date with 'origin/master'.")) {
-      throw "Your branch is not up to date with 'origin/master'.";
+    if (!stdout.includes("Your branch is up to date with 'origin/main'.")) {
+      throw "Your branch is not up to date with 'origin/main'.";
     }
 
     if (stdout.includes("Changes")) {

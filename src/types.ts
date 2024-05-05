@@ -87,6 +87,7 @@ export interface TabInfo {
   port: chrome.runtime.Port;
   socket?: SocketIOClient.Socket;
   roomId?: string;
+  sentConnectionRequest: boolean;
 }
 
 export interface Radius {
