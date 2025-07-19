@@ -71,3 +71,56 @@ jobs:
       with:
         name: rolltogether-firefox-zip
         path: rolltogether-firefox.zip
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download Chrome package
+      uses: actions/download-artifact@v4
+      with:
+        name: rolltogether-chrome-zip
+        path: ./
+    
+    - name: Download Firefox package
+      uses: actions/download-artifact@v4
+      with:
+        name: rolltogether-firefox-zip
+        path: ./
+    
+    - name: Extract version from manifest
+      id: get_version
+      run: |
+        VERSION=$(grep -Po '"version": "\K[^"]*' manifest.json)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Found version: $VERSION"
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: "Roll Together v${{ steps.get_version.outputs.version }}"
+        body: |
+          ## Roll Together Extension v${{ steps.get_version.outputs.version }}
+          
+          ### Downloads
+          - **Chrome Extension**: `rolltogether-chrome.zip`
+          - **Firefox Extension**: `rolltogether-firefox.zip`
+          
+          ### Installation
+          1. Download the appropriate zip file for your browser
+          2. Extract the contents
+          3. Load the extension in developer mode
+          
+          For detailed installation instructions, see the [README](https://github.com/${{ github.repository }}/blob/main/README.md).
+        files: |
+          rolltogether-chrome.zip
+          rolltogether-firefox.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
