@@ -10,7 +10,10 @@
     "postpublish": "npm run build:production:chrome && npm run build:production:firefox && npm run package",
     "build:production:chrome": "webpack --env production",
     "build:production:firefox": "webpack --env production --env firefox",
-    "package": "cd build/ && bestzip ../rolltogether-chrome.zip * && cd ../build-firefox/ && bestzip ../rolltogether-firefox.zip *"
+    "build::production": "npm run build:production:chrome && npm run build:production:firefox",
+    "package::chrome": "cd build/ && bestzip ../rolltogether-chrome.zip *",
+    "package::firefox": "cd build-firefox/ && bestzip ../rolltogether-firefox.zip *",
+    "package": "npm run package::chrome && npm run package::firefox"
   },
   "private": true,
   "devDependencies": {
