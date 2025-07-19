@@ -13,6 +13,10 @@ const envVariables = require("./env.json");
 module.exports = (env) => {
   console.log(env);
 
+  const isFirefox = env.firefox || false;
+  const manifestFile = isFirefox ? "manifest.firefox.json" : "manifest.json";
+  const outputDir = isFirefox ? "build-firefox" : "build";
+
   /** @type {webpack.Configuration} */
   const config = {
     mode: env.production ? "production" : "development",
@@ -21,6 +25,7 @@ module.exports = (env) => {
       content_script: "./src/content_script.ts",
       popup: "./src/popup.ts",
       options: "./src/options.ts",
+      "browser-compat": "./src/browser-compat.ts",
     },
     module: {
       rules: [
@@ -36,7 +41,7 @@ module.exports = (env) => {
     },
     output: {
       filename: "[name].js",
-      path: path.resolve(__dirname, "build"),
+      path: path.resolve(__dirname, outputDir),
     },
     optimization: { minimize: false },
     devtool: env.production ? false : "inline-source-map",
@@ -44,7 +49,7 @@ module.exports = (env) => {
       // @ts-ignore
       new CopyPlugin({
         patterns: [
-          { from: "manifest.json" },
+          { from: manifestFile, to: "manifest.json" },
           { from: "src/fonts", to: "fonts" },
           { from: "src/images", to: "images" },
           { from: "src/options.html" },

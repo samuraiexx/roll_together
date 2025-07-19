@@ -3,6 +3,7 @@ import _ from "lodash";
 
 import { log, getParameterByName, setIconColor } from "./common";
 import { Message, MessageTypes, PortName, States, TabInfo } from "./types";
+import { extensionAPI, getActionAPI } from "./browser-compat";
 
 declare const process: { env: { [key: string]: string | undefined } };
 declare const self: ServiceWorkerGlobalScope;
@@ -24,13 +25,13 @@ function handleContentScriptConnection(port: chrome.runtime.Port): void {
   if (!_.isNil(urlRoomId)) {
     sendConnectionRequestToContentScript(tabId);
   } else {
-    chrome.action.enable(tabId);
+    getActionAPI().enable(tabId);
   }
 }
 
 function handleContentScriptDisconnection(port: chrome.runtime.Port): void {
   const tabId = port.sender?.tab?.id!;
-  chrome.action.disable(tabId);
+  getActionAPI().disable(tabId);
   disconnectWebsocket(tabId);
   delete tabsInfo[tabId];
 }
@@ -197,7 +198,7 @@ function connectWebsocket(
         roomProgress,
       });
       tryUpdatePopup(tabInfo.roomId);
-      chrome.action.enable(tabId);
+      getActionAPI().enable(tabId);
       tabInfo.sentConnectionRequest = false;
 
       sendUpdateToContentScript(tabId, roomState, roomProgress);
@@ -213,7 +214,7 @@ function connectWebsocket(
   );
 }
 
-chrome.runtime.onConnect.addListener(function (port) {
+extensionAPI.runtime.onConnect.addListener(function (port: chrome.runtime.Port) {
   log("Port connected", port.name);
   switch (port.name) {
     case PortName.POPUP:
@@ -242,13 +243,13 @@ chrome.runtime.onConnect.addListener(function (port) {
   }
 });
 
-chrome.runtime.onInstalled.addListener(() => {
+extensionAPI.runtime.onInstalled.addListener(() => {
   const canvas = new OffscreenCanvas(128, 128);
   const ctx = canvas.getContext("2d")! as OffscreenCanvasRenderingContext2D;
   setIconColor(canvas, ctx);
 });
 
-chrome.action.disable();
+getActionAPI().disable();
 self.addEventListener = _.noop;
 
 log("Service Worker Loaded");

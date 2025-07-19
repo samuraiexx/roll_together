@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { getExtensionColor, log, updateQueryStringParameter } from "./common";
 import { Message, MessageTypes, PortName } from "./types";
+import { extensionAPI } from "./browser-compat";
 
 const createRoomButton: HTMLButtonElement = document.getElementById(
   "createRoom"
@@ -22,7 +23,7 @@ let optionButtons: HTMLCollectionOf<HTMLButtonElement> =
 declare const navigator: Navigator;
 
 // Global Variables
-const g_port = chrome.runtime.connect({ name: PortName.POPUP });
+const g_port = extensionAPI.runtime.connect({ name: PortName.POPUP });
 
 // Service Worker Message Handlers
 g_port.onMessage.addListener((message: Message) => {
@@ -39,7 +40,7 @@ g_port.onMessage.addListener((message: Message) => {
     return;
   }
 
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+  extensionAPI.tabs.query({ active: true, currentWindow: true }, function (tabs: chrome.tabs.Tab[]) {
     const tab: chrome.tabs.Tab = tabs[0];
     const url: string = updateQueryStringParameter(
       tab.url!,
@@ -58,7 +59,7 @@ g_port.onMessage.addListener((message: Message) => {
 // HTML Element Event Handlers
 createRoomButton.onclick = async function (): Promise<void> {
   log("Clicking CreateRoomButton");
-  chrome.tabs.query(
+  extensionAPI.tabs.query(
     { active: true, currentWindow: true },
     function (tabs: chrome.tabs.Tab[]): void {
       const tabId = tabs[0].id;
@@ -76,7 +77,7 @@ copyUrlButton.onclick = function (): void {
 
 disconnectButton.onclick = function (): void {
   log("Clicking DisconnectButton");
-  chrome.tabs.query(
+  extensionAPI.tabs.query(
     { active: true, currentWindow: true },
     function (tabs: chrome.tabs.Tab[]): void {
       const tabId = tabs[0].id;
@@ -88,11 +89,11 @@ disconnectButton.onclick = function (): void {
 };
 
 // Tab Event Listeners
-chrome.tabs.onActivated.addListener((activeInfo) => {
+extensionAPI.tabs.onActivated.addListener((activeInfo: chrome.tabs.TabActiveInfo) => {
   requestRoomId();
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+extensionAPI.tabs.onUpdated.addListener((tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
   requestRoomId();
 });
 
@@ -125,7 +126,7 @@ function renderConnectedPage() {
 }
 
 function requestRoomId() {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+  extensionAPI.tabs.query({ active: true, currentWindow: true }, function (tabs: chrome.tabs.Tab[]) {
     const tab: chrome.tabs.Tab = tabs[0];
     if (tab.id) {
       g_port.postMessage({

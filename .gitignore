@@ -1,3 +1,6 @@
 build/
+build-firefox/
 node_modules/
 rolltogether.zip
+rolltogether-chrome.zip
+rolltogether-firefox.zip

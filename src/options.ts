@@ -7,6 +7,7 @@ import {
   crunchyrollOrange,
   setIconColor,
 } from "./common";
+import { extensionAPI } from "./browser-compat";
 
 const colorSelector: HTMLDivElement = document.getElementById(
   "colorSelector"
@@ -125,13 +126,13 @@ removeButton.onclick = function (): void {
 };
 
 function setColorMenu(colorMenu: string[]): void {
-  chrome.storage.sync.set({ colorOptions: colorMenu }, function (): void {
+  extensionAPI.storage.sync.set({ colorOptions: colorMenu }, function (): void {
     log("Color menu updated");
   });
 }
 
 function setExtensionColor(color: string): void {
-  chrome.storage.sync.set({ extensionColor: color }, function (): void {
+  extensionAPI.storage.sync.set({ extensionColor: color }, function (): void {
     log("Setting extension color to " + color);
   });
 

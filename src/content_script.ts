@@ -10,8 +10,9 @@ import {
   Message,
   PortName,
 } from "./types";
+import { extensionAPI } from "./browser-compat";
 
-const g_port = chrome.runtime.connect({ name: PortName.CONTENT_SCRIPT });
+const g_port = extensionAPI.runtime.connect({ name: PortName.CONTENT_SCRIPT });
 
 const ignoreNext: { [index: string]: boolean } = {};
 let g_player: HTMLVideoElement | undefined = undefined;

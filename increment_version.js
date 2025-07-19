@@ -42,6 +42,23 @@ const _ = require("lodash");
       return data;
     });
 
+    // Also update Firefox manifest
+    await updateJsonFile("manifest.firefox.json", (data) => {
+      let [major, minor, patch] = data.version
+        .split(".")
+        .map((el) => parseInt(el ? el : 0));
+      if (isMajor) {
+        major++;
+        minor = patch = 0;
+      } else if (isMinor) {
+        minor++;
+        patch = 0;
+      } else patch++;
+
+      data.version = `${major}.${minor}.${patch}`;
+      return data;
+    });
+
     await exec('git add * && git commit -m "Increment version" && git push');
 
     console.log("The Manifest Version was succesfully Updated!");

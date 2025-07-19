@@ -1,0 +1,54 @@
+{
+  "name": "Roll Together",
+  "version": "3.1.1",
+  "description": "Synchronize Crunchyroll Videos",
+  "background": {
+    "scripts": [
+      "service_worker.js"
+    ],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "all_frames": true,
+      "matches": [
+        "*://static.crunchyroll.com/*"
+      ],
+      "js": [
+        "content_script.js"
+      ]
+    }
+  ],
+  "permissions": [
+    "storage",
+    "*://www.crunchyroll.com/*",
+    "*://static.crunchyroll.com/*",
+    "*://rt-sync.azurewebsites.net/*"
+  ],
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/get_started16.png",
+      "32": "images/get_started32.png",
+      "48": "images/get_started48.png",
+      "128": "images/get_started128.png"
+    }
+  },
+  "icons": {
+    "16": "images/get_started16.png",
+    "32": "images/get_started32.png",
+    "48": "images/get_started48.png",
+    "128": "images/get_started128.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "manifest_version": 2,
+  "applications": {
+    "gecko": {
+      "id": "let.us.roll.together@gmail.com",
+      "strict_min_version": "109.0"
+    }
+  }
+}

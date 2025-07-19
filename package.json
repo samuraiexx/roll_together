@@ -1,13 +1,21 @@
 {
   "scripts": {
     "build": "webpack --env development",
+    "build:firefox": "webpack --env development --env firefox",
+    "build:chrome": "webpack --env development",
     "watch": "webpack --env development -w",
+    "watch:firefox": "webpack --env development --env firefox -w",
+    "watch:chrome": "webpack --env development -w",
     "publish": "node increment_version.js",
-    "postpublish": "webpack --env production && cd build/ && bestzip ../rolltogether.zip *"
+    "postpublish": "npm run build:production:chrome && npm run build:production:firefox && npm run package",
+    "build:production:chrome": "webpack --env production",
+    "build:production:firefox": "webpack --env production --env firefox",
+    "package": "cd build/ && bestzip ../rolltogether-chrome.zip * && cd ../build-firefox/ && bestzip ../rolltogether-firefox.zip *"
   },
   "private": true,
   "devDependencies": {
     "@types/chrome": "^0.0.266",
+    "@types/firefox-webext-browser": "^120.0.4",
     "@types/lodash": "^4.14.165",
     "@types/socket.io-client": "^1.4.34",
     "@types/webpack": "^5.28.0",

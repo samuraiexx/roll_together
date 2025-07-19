@@ -1,5 +1,6 @@
 import _, { get } from "lodash";
 import { Radius, StorageData } from "./types";
+import { extensionAPI } from "./browser-compat";
 
 declare const process: any;
 
@@ -54,7 +55,7 @@ export function updateQueryStringParameter(
 
 export function getExtensionColor(): Promise<string> {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(
+    extensionAPI.storage.sync.get(
       { extensionColor: crunchyrollOrange },
       function (data: StorageData) {
         resolve(data.extensionColor as string);
@@ -65,7 +66,7 @@ export function getExtensionColor(): Promise<string> {
 
 export function getColorMenu(): Promise<string[]> {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(
+    extensionAPI.storage.sync.get(
       { colorOptions: defaultColorOptions },
       function (data: StorageData) {
         resolve(data.colorOptions as string[]);
