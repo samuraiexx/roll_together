@@ -47,13 +47,13 @@ jobs:
     - name: Download Chrome package
       uses: actions/download-artifact@v4
       with:
-        name: rolltogether-chrome-zip
+        name: rolltogether-chrome
         path: ./
     
     - name: Download Firefox package
       uses: actions/download-artifact@v4
       with:
-        name: rolltogether-firefox-zip
+        name: rolltogether-firefox
         path: ./
     
     - name: Extract version from manifest
