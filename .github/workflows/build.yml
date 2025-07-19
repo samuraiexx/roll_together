@@ -8,7 +8,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  package:
     runs-on: ubuntu-latest
     
     strategy:
@@ -29,15 +29,15 @@ jobs:
     
     - name: Build for ${{ matrix.browser }}
       run: npm run build:production:${{ matrix.browser }}
-    
+
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
         name: rolltogether-${{ matrix.browser }}
-        path: build${{ matrix.browser == 'firefox' && '-firefox' || '' }}/
-    
+        path: build${{ matrix.browser == 'firefox' && '-firefox' || '' }}
+
   release:
-    needs: build
+    needs: package
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref_type == 'tag'
     
@@ -82,6 +82,8 @@ jobs:
           
           For detailed installation instructions, see the [README](https://github.com/${{ github.repository }}/blob/main/README.md).
         files: |
+          rolltogether-chrome.zip
+          rolltogether-firefox.zip
           rolltogether-chrome
           rolltogether-firefox
         draft: false
