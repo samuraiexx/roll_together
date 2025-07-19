@@ -36,47 +36,10 @@ jobs:
         name: rolltogether-${{ matrix.browser }}
         path: build${{ matrix.browser == 'firefox' && '-firefox' || '' }}/
     
-  package:
+  release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Build both browsers
-      run: |
-        npm run build:production:chrome
-        npm run build:production:firefox
-    
-    - name: Package extensions
-      run: npm run package
-    
-    - name: Upload Chrome package
-      uses: actions/upload-artifact@v4
-      with:
-        name: rolltogether-chrome-zip
-        path: rolltogether-chrome.zip
-    
-    - name: Upload Firefox package
-      uses: actions/upload-artifact@v4
-      with:
-        name: rolltogether-firefox-zip
-        path: rolltogether-firefox.zip
-
-  release:
-    needs: package
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     
     steps:
     - uses: actions/checkout@v4
