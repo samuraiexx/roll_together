@@ -82,8 +82,8 @@ jobs:
           
           For detailed installation instructions, see the [README](https://github.com/${{ github.repository }}/blob/main/README.md).
         files: |
-          rolltogether-chrome.zip
-          rolltogether-firefox.zip
+          rolltogether-chrome
+          rolltogether-firefox
         draft: false
         prerelease: false
       env:
