@@ -145,7 +145,7 @@ function handleServiceWorkerMessage(serviceWorkerMessage: Message) {
 }
 
 function runContentScript() {
-  g_player = document.getElementById("player0") as HTMLVideoElement;
+  g_player = (document.getElementById("player0") || document.getElementById("bitmovinplayer-video-null")) as HTMLVideoElement;
 
   if (!g_player) {
     setTimeout(runContentScript, 500);
