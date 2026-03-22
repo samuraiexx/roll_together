@@ -144,21 +144,8 @@ function handleServiceWorkerMessage(serviceWorkerMessage: Message) {
   }
 }
 
-function findPlayer(): HTMLVideoElement | null {
-  // New Bitmovin player (www.crunchyroll.com)
-  const container = document.getElementById("player-container");
-  if (container) {
-    const video = container.querySelector("video");
-    if (video) return video;
-  }
-  const bitmovin = document.querySelector(".bitmovinplayer-container video");
-  if (bitmovin) return bitmovin as HTMLVideoElement;
-  // Legacy Vilos player (static.crunchyroll.com iframe)
-  return document.getElementById("player0") as HTMLVideoElement | null;
-}
-
 function runContentScript() {
-  g_player = findPlayer() ?? undefined;
+  g_player = document.getElementById("player0") as HTMLVideoElement;
 
   if (!g_player) {
     setTimeout(runContentScript, 500);

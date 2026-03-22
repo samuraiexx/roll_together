@@ -1,6 +1,6 @@
 {
   "name": "Roll Together",
-  "version": "3.2.0",
+  "version": "3.1.1",
   "description": "Synchronize Crunchyroll Videos",
   "background": {
     "scripts": [
@@ -12,7 +12,6 @@
     {
       "all_frames": true,
       "matches": [
-        "*://www.crunchyroll.com/*",
         "*://static.crunchyroll.com/*"
       ],
       "js": [
