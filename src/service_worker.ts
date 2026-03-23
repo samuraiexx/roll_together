@@ -10,6 +10,7 @@ declare const self: ServiceWorkerGlobalScope;
 
 const tabsInfo: { [index: number]: TabInfo | undefined } = {};
 const serverUrl = process.env.SYNC_SERVER!;
+const pendingDisconnects: { [index: number]: ReturnType<typeof setTimeout> | undefined } = {};
 
 let popupPort: chrome.runtime.Port | undefined = undefined;
 
@@ -17,8 +18,23 @@ function handleContentScriptConnection(port: chrome.runtime.Port): void {
   const tabId = port.sender?.tab?.id!;
   const url = port.sender?.tab?.url!;
 
+  if (pendingDisconnects[tabId]) {
+    clearTimeout(pendingDisconnects[tabId]);
+    delete pendingDisconnects[tabId];
+  }
+
+  const existingInfo = tabsInfo[tabId];
+  if (existingInfo && existingInfo.socket && existingInfo.roomId) {
+    existingInfo.port = port;
+    existingInfo.sentConnectionRequest = false;
+    getActionAPI().enable(tabId);
+    return;
+  }
+
   if (_.isNil(tabsInfo[tabId])) {
     tabsInfo[tabId] = { port, tabId, sentConnectionRequest: false };
+  } else {
+    tabsInfo[tabId]!.port = port;
   }
 
   const urlRoomId: string | null = getParameterByName(url, "rollTogetherRoom");
@@ -31,9 +47,22 @@ function handleContentScriptConnection(port: chrome.runtime.Port): void {
 
 function handleContentScriptDisconnection(port: chrome.runtime.Port): void {
   const tabId = port.sender?.tab?.id!;
-  getActionAPI().disable(tabId);
-  disconnectWebsocket(tabId);
-  delete tabsInfo[tabId];
+
+  // Delay cleanup to allow a reconnect (page reload) to cancel it
+  pendingDisconnects[tabId] = setTimeout(() => {
+    delete pendingDisconnects[tabId];
+    const tabInfo = tabsInfo[tabId];
+
+    // If the port was already replaced by a new connection, skip cleanup
+    if (tabInfo && tabInfo.port !== port) {
+      log("Ignoring stale port disconnect for tab", tabId);
+      return;
+    }
+
+    getActionAPI().disable(tabId);
+    disconnectWebsocket(tabId);
+    delete tabsInfo[tabId];
+  }, 3000);
 }
 
 function tryUpdatePopup(roomId: string | undefined = undefined): void {

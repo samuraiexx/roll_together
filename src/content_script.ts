@@ -19,6 +19,7 @@ let g_player: HTMLVideoElement | undefined = undefined;
 let g_lastFrameProgress: number | undefined = undefined;
 let g_heartBeatInterval: NodeJS.Timeout | undefined = undefined; // Keeps Service Worker alive while connected
 let g_pendingMessages: Message[] = [];
+let g_playPromise: Promise<void> | undefined = undefined;
 
 function getState(stateName: PlayerStateProp): boolean | number {
   return g_player![stateName];
@@ -81,11 +82,23 @@ function triggerAction(action: Actions, progress: number): void {
 
   switch (action) {
     case Actions.PAUSE:
-      g_player.pause();
-      g_player.currentTime = progress;
+      if (g_playPromise) {
+        g_playPromise.then(() => {
+          g_player!.pause();
+          g_player!.currentTime = progress;
+        }).catch(_.noop);
+        g_playPromise = undefined;
+      } else {
+        g_player.pause();
+        g_player.currentTime = progress;
+      }
       break;
     case Actions.PLAY:
-      g_player.play();
+      g_playPromise = g_player.play();
+      g_playPromise.catch(_.noop);
+      if (Math.abs(g_player.currentTime - progress) > LIMIT_DELTA_TIME) {
+        g_player.currentTime = progress;
+      }
       break;
     case Actions.TIME_UPDATE:
       g_player.currentTime = progress;
