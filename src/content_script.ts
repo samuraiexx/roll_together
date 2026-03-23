@@ -18,6 +18,7 @@ const ignoreNext: { [index: string]: boolean } = {};
 let g_player: HTMLVideoElement | undefined = undefined;
 let g_lastFrameProgress: number | undefined = undefined;
 let g_heartBeatInterval: NodeJS.Timeout | undefined = undefined; // Keeps Service Worker alive while connected
+let g_pendingMessages: Message[] = [];
 
 function getState(stateName: PlayerStateProp): boolean | number {
   return g_player![stateName];
@@ -121,6 +122,12 @@ function handleRemoteUpdate(message: Message): void {
 }
 
 function handleServiceWorkerMessage(serviceWorkerMessage: Message) {
+  if (!g_player) {
+    log("Player not ready, queuing message", serviceWorkerMessage);
+    g_pendingMessages.push(serviceWorkerMessage);
+    return;
+  }
+
   log("Received message from Background", serviceWorkerMessage);
 
   switch (serviceWorkerMessage.type) {
@@ -159,7 +166,12 @@ function runContentScript() {
     );
   }
 
-  g_port.onMessage.addListener(handleServiceWorkerMessage);
+  // Replay any messages that arrived before the player was ready
+  const pending = g_pendingMessages.splice(0);
+  for (const msg of pending) {
+    handleServiceWorkerMessage(msg);
+  }
 }
 
+g_port.onMessage.addListener(handleServiceWorkerMessage);
 runContentScript();
