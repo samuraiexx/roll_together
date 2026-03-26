@@ -1,6 +1,11 @@
 # Roll Together
 Roll Together is a browser extension for Google Chrome and Mozilla Firefox. It synchronizes Crunchyroll Videos that are being played at multiple computers.
 
+## Retirement note
+I believe this extension's purpose was completed as we went through the pandemic and were able to still feel close our friends, at least while we watched anime. Since then, several other forks and new extensions with similar purposes were created. Finally, the maintainance cost, as an totally free open source project, increased with manifest v3, changes in the crunchyroll player and pushbacks from Google to publish fixes.
+
+I want to leave a huge thanks to everyone who contributed to this project.
+
 ## Browser Support
 - **Chrome/Chromium**: Manifest V3 (Chrome 116+)
 - **Firefox**: Manifest V2 (Firefox 109+)
